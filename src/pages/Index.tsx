@@ -1,11 +1,19 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import AppointmentsCard from "@/components/dashboard/AppointmentsCard";
+import IntakeCard from "@/components/dashboard/IntakeCard";
+import NoShowRiskCard from "@/components/dashboard/NoShowRiskCard";
+import PreauthCard from "@/components/dashboard/PreauthCard";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2">
+      <div className="xl:col-span-1 space-y-6">
+        <AppointmentsCard />
+        <PreauthCard />
+      </div>
+      <div className="xl:col-span-1 space-y-6">
+        <NoShowRiskCard />
+        <IntakeCard />
       </div>
     </div>
   );

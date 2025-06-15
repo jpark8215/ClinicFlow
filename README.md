@@ -1,73 +1,82 @@
-# Welcome to your Lovable project
 
-## Project info
+# ClinicFlow - AI-Powered Clinical Operations
 
-**URL**: https://lovable.dev/projects/38bb5905-7279-4c84-9932-161efd0784cd
+Welcome to ClinicFlow, a web application designed to streamline clinical operations using AI and automation. This project was bootstrapped with Lovable.
 
-## How can I edit this code?
+## Project Vision
 
-There are several ways of editing your application.
+ClinicFlow aims to be a comprehensive solution for healthcare providers, featuring:
+- **Preauth Bot**: An automated system for handling prior authorizations with payers.
+- **Smart Scheduling**: An intelligent appointment scheduler with forecasting capabilities.
+- **Intake Automation**: A tool to digitize patient intake forms using OCR and integrate with EHRs.
+- **No-Show Assistant**: A predictive model to mitigate patient no-shows and optimize calendar availability.
 
-**Use Lovable**
+## MVP Overview (Current Version)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/38bb5905-7279-4c84-9932-161efd0784cd) and start prompting.
+This initial version (MVP) establishes the foundational user interface and project structure.
 
-Changes made via Lovable will be committed automatically to this repo.
+### Key Features
+- **Dashboard**: A central hub displaying key metrics and tasks.
+- **Modular Components**: The UI is built with React and shadcn/ui, ensuring a clean and consistent design system.
+- **Placeholder Data**: The dashboard is populated with dummy data to simulate real-world scenarios.
+- **Navigation**: A sidebar provides navigation to the different feature areas (currently placeholders).
 
-**Use your preferred IDE**
+### Tech Stack
+- **Frontend**: React, Vite, TypeScript
+- **UI**: Tailwind CSS, shadcn/ui
+- **Charting**: Recharts
+- **Icons**: Lucide React
+- **Routing**: React Router
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Getting Started
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+To run the project locally, you need Node.js and npm installed.
 
-Follow these steps:
+1.  **Clone the repository.**
+2.  **Install dependencies**: `npm install`
+3.  **Start the development server**: `npm run dev`
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+The application will be available at `http://localhost:8080`.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Project Structure
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+src
+├── components
+│   ├── dashboard     # Dashboard-specific cards
+│   ├── layout        # Main layout components (Sidebar, Header)
+│   └── ui            # shadcn/ui components
+├── lib
+│   ├── dummy-data.ts # Placeholder data for the MVP
+│   └── utils.ts      # Utility functions
+├── pages
+│   ├── Index.tsx     # The main dashboard page
+│   └── NotFound.tsx  # 404 page
+├── types
+│   └── index.ts      # TypeScript type definitions
+├── App.tsx           # Main application component with routing
+└── main.tsx          # Application entry point
 ```
 
-**Edit a file directly in GitHub**
+## Development Roadmap
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The following is a high-level roadmap for developing the full-featured application.
 
-**Use GitHub Codespaces**
+1.  **Backend Integration (Supabase)**:
+    - Set up database tables for patients, appointments, etc.
+    - Implement user authentication.
+2.  **Smart Scheduling**:
+    - Develop the calendar UI.
+    - Integrate a forecasting model for appointment demand.
+    - Implement an alert system.
+3.  **Preauth Bot**:
+    - Design the UI for tracking authorization status.
+    - Build a secure connector to payer systems (requires external APIs).
+4.  **Intake Automation**:
+    - Integrate an OCR service to process documents.
+    - Create a form validator.
+    - Develop an EHR form-filling mechanism.
+5.  **No-Show Assistant**:
+    - Train a prediction model based on historical data.
+    - Implement logic for auto-filling calendar gaps.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/38bb5905-7279-4c84-9932-161efd0784cd) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
