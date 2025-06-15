@@ -53,6 +53,50 @@ export type Database = {
           },
         ]
       }
+      insurance_eligibility: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          patient_id: string
+          payer_name: string
+          status: Database["public"]["Enums"]["eligibility_status"]
+          updated_at: string
+          user_id: string
+          verification_date: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          patient_id: string
+          payer_name: string
+          status?: Database["public"]["Enums"]["eligibility_status"]
+          updated_at?: string
+          user_id?: string
+          verification_date?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          patient_id?: string
+          payer_name?: string
+          status?: Database["public"]["Enums"]["eligibility_status"]
+          updated_at?: string
+          user_id?: string
+          verification_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_eligibility_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intake_tasks: {
         Row: {
           created_at: string
@@ -168,6 +212,7 @@ export type Database = {
         | "Cancelled"
         | "Completed"
         | "No-Show"
+      eligibility_status: "Eligible" | "Ineligible" | "Pending" | "Error"
       intake_status: "Pending OCR" | "Needs Validation" | "Complete"
       preauth_status: "Pending" | "Approved" | "Denied" | "Submitted"
     }
@@ -292,6 +337,7 @@ export const Constants = {
         "Completed",
         "No-Show",
       ],
+      eligibility_status: ["Eligible", "Ineligible", "Pending", "Error"],
       intake_status: ["Pending OCR", "Needs Validation", "Complete"],
       preauth_status: ["Pending", "Approved", "Denied", "Submitted"],
     },
