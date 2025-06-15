@@ -2,9 +2,18 @@
 import { Search, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "../auth/AuthProvider";
 
 const Header = () => {
+  const { user } = useAuth();
+
+  const getInitials = (email: string | undefined) => {
+    if (!email) return "U";
+    const parts = email.split("@")[0];
+    return parts.substring(0, 2).toUpperCase();
+  };
+
   return (
     <header className="flex items-center h-16 px-6 border-b bg-card">
       <div className="flex-1">
@@ -19,8 +28,7 @@ const Header = () => {
           <Bell className="h-5 w-5" />
         </Button>
         <Avatar>
-          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-          <AvatarFallback>CN</AvatarFallback>
+          <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
         </Avatar>
       </div>
     </header>

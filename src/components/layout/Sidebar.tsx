@@ -1,5 +1,5 @@
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Bell,
   Calendar,
@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "../ui/use-toast";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Gauge },
@@ -22,6 +24,26 @@ const navItems = [
 ];
 
 const Sidebar = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error logging out",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      navigate("/auth");
+    }
+  };
+
   return (
     <aside className="hidden lg:flex flex-col w-64 bg-card border-r fixed h-full">
       <div className="flex items-center h-16 px-6 border-b">
@@ -51,7 +73,7 @@ const Sidebar = () => {
               <Settings className="h-4 w-4" />
               Settings
           </Button>
-           <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:text-destructive">
+           <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:text-destructive" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               Log Out
           </Button>
