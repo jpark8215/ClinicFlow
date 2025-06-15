@@ -6,7 +6,7 @@ Welcome to ClinicFlow, a web application designed to streamline clinical operati
 ## Project Vision
 
 ClinicFlow aims to be a comprehensive solution for healthcare providers, featuring:
-- **Preauth Bot**: An automated system for handling prior authorizations with payers.
+- **Prior Authorization**: An automated system for handling prior authorizations with payers.
 - **Smart Scheduling**: An intelligent appointment scheduler with forecasting capabilities.
 - **Intake Automation**: A tool to digitize patient intake forms using OCR and integrate with EHRs.
 - **No-Show Assistant**: A predictive model to mitigate patient no-shows and optimize calendar availability.
@@ -69,7 +69,7 @@ The following is a high-level roadmap for developing the full-featured applicati
     - Develop the calendar UI.
     - Integrate a forecasting model for appointment demand.
     - Implement an alert system.
-3.  **Preauth Bot**:
+3.  **Prior Authorization**:
     - Design the UI for tracking authorization status.
     - Build a secure connector to payer systems (requires external APIs).
 4.  **Intake Automation**:
