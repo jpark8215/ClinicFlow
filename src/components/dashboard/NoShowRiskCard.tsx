@@ -476,7 +476,7 @@ const NoShowRiskCard = () => {
                       {highRiskAppointments.length} high-risk appointments detected
                     </p>
                     <p className="text-sm">
-                      These patients have a >60% probability of not showing up. Consider sending priority reminders or creating overbook slots.
+                      These patients have a {'>'} 60% probability of not showing up. Consider sending priority reminders or creating overbook slots.
                     </p>
                   </div>
                   <div className="flex gap-2">
