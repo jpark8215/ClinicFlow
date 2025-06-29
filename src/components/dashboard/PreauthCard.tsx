@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardContent,
@@ -7,13 +6,14 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, FileText } from "lucide-react";
+import { MoreVertical, FileText, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tables } from "@/integrations/supabase/types";
+import { useNavigate } from "react-router-dom";
 
 const fetchPreAuthorizations = async () => {
   const { data, error } = await supabase
@@ -29,6 +29,7 @@ const fetchPreAuthorizations = async () => {
 };
 
 const PreauthCard = () => {
+  const navigate = useNavigate();
   const {
     data: preAuthorizations,
     isLoading,
@@ -119,7 +120,21 @@ const PreauthCard = () => {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>{renderContent()}</CardContent>
+      <CardContent>
+        {renderContent()}
+        {preAuthorizations && preAuthorizations.length > 0 && (
+          <div className="mt-4 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center gap-2"
+              onClick={() => navigate("/preauth")}
+            >
+              View All Prior Authorizations
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 };

@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardContent,
@@ -7,13 +6,14 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, UserPlus } from "lucide-react";
+import { MoreVertical, UserPlus, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
 
 type IntakeTaskWithPatient = Tables<"intake_tasks"> & {
   patients: Pick<Tables<"patients">, "full_name"> | null;
@@ -33,6 +33,7 @@ const fetchIntakeTasks = async () => {
 };
 
 const IntakeCard = () => {
+  const navigate = useNavigate();
   const {
     data: tasks,
     isLoading,
@@ -121,7 +122,21 @@ const IntakeCard = () => {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>{renderContent()}</CardContent>
+      <CardContent>
+        {renderContent()}
+        {tasks && tasks.length > 0 && (
+          <div className="mt-4 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center gap-2"
+              onClick={() => navigate("/intake")}
+            >
+              View All Intake Tasks
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 };

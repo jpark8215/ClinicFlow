@@ -8,6 +8,8 @@ import {
   Settings,
   UserPlus,
   Users,
+  Shield,
+  FileCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,8 @@ import { useAuth } from "../auth/AuthProvider";
 const navItems = [
   { href: "/", label: "Dashboard", icon: Gauge },
   { href: "/schedule", label: "Smart Scheduling", icon: Calendar },
-  { href: "/preauth", label: "Preauth Bot", icon: FileText },
+  { href: "/preauth", label: "Prior Authorization", icon: FileText },
+  { href: "/insurance-eligibility", label: "Insurance Eligibility", icon: Shield },
   { href: "/intake", label: "Intake Automation", icon: UserPlus },
   { href: "/patients", label: "Patient List", icon: Users },
 ];
