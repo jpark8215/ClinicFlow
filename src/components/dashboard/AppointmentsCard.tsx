@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardContent,
@@ -8,12 +7,13 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Calendar, MoreVertical } from "lucide-react";
+import { Calendar, MoreVertical, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
 
 type AppointmentWithPatient = Tables<"appointments"> & {
   patients: Pick<Tables<"patients">, "full_name"> | null;
@@ -29,7 +29,8 @@ const fetchAppointments = async () => {
     .select("*, patients (full_name)")
     .gte("appointment_time", startOfDay)
     .lte("appointment_time", endOfDay)
-    .order("appointment_time", { ascending: true });
+    .order("appointment_time", { ascending: true })
+    .limit(5);
 
   if (error) {
     throw new Error(error.message);
@@ -45,6 +46,7 @@ const getInitials = (name: string) => {
 };
 
 const AppointmentsCard = () => {
+  const navigate = useNavigate();
   const {
     data: appointments,
     isLoading,
@@ -143,7 +145,21 @@ const AppointmentsCard = () => {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>{renderContent()}</CardContent>
+      <CardContent>
+        {renderContent()}
+        {appointments && appointments.length > 0 && (
+          <div className="mt-4 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center gap-2"
+              onClick={() => navigate("/appointments/today")}
+            >
+              View All Today's Appointments
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 };
