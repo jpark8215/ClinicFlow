@@ -57,6 +57,9 @@ import {
   FileText,
   Bell,
   Activity,
+  Stethoscope,
+  Users,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, isToday, parseISO } from "date-fns";
@@ -73,6 +76,7 @@ type AppointmentWithDetails = Tables<"appointments"> & {
 const TodaysAppointmentsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [providerFilter, setProviderFilter] = useState<string>("all");
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const navigate = useNavigate();
@@ -110,21 +114,54 @@ const TodaysAppointmentsPage = () => {
     },
   });
 
-  // Filter and search appointments
+  // Get unique providers for filter dropdown
+  const uniqueProviders = useMemo(() => {
+    if (!appointments) return [];
+    
+    const providers = new Map();
+    appointments.forEach(appointment => {
+      appointment.appointments_providers?.forEach(ap => {
+        if (ap.providers?.full_name) {
+          providers.set(ap.providers.full_name, {
+            name: ap.providers.full_name,
+            specialty: ap.providers.specialty,
+          });
+        }
+      });
+    });
+    
+    return Array.from(providers.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [appointments]);
+
+  // Enhanced filter and search appointments
   const filteredAppointments = useMemo(() => {
     if (!appointments) return [];
 
     return appointments.filter((appointment) => {
-      const matchesSearch = 
-        appointment.patients?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.appointment_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.notes?.toLowerCase().includes(searchTerm.toLowerCase());
+      // Search term matching (patient name, provider name, appointment type, notes)
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = !searchTerm || (
+        appointment.patients?.full_name?.toLowerCase().includes(searchLower) ||
+        appointment.appointment_type?.toLowerCase().includes(searchLower) ||
+        appointment.notes?.toLowerCase().includes(searchLower) ||
+        appointment.appointments_providers?.some(ap => 
+          ap.providers?.full_name?.toLowerCase().includes(searchLower) ||
+          ap.providers?.specialty?.toLowerCase().includes(searchLower)
+        )
+      );
 
+      // Status filter
       const matchesStatus = statusFilter === "all" || appointment.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      // Provider filter
+      const matchesProvider = providerFilter === "all" || 
+        appointment.appointments_providers?.some(ap => 
+          ap.providers?.full_name === providerFilter
+        );
+
+      return matchesSearch && matchesStatus && matchesProvider;
     });
-  }, [appointments, searchTerm, statusFilter]);
+  }, [appointments, searchTerm, statusFilter, providerFilter]);
 
   // Statistics
   const stats = useMemo(() => {
@@ -240,6 +277,14 @@ const TodaysAppointmentsPage = () => {
     });
   };
 
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setProviderFilter("all");
+  };
+
+  const hasActiveFilters = searchTerm || statusFilter !== "all" || providerFilter !== "all";
+
   if (error) {
     return (
       <div className="container mx-auto py-4 px-4 sm:py-6">
@@ -351,33 +396,135 @@ const TodaysAppointmentsPage = () => {
         </Card>
       </div>
 
-      {/* Filters and Search */}
+      {/* Enhanced Filters and Search */}
       <Card>
         <CardContent className="p-3 sm:p-4">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by patient name, type, or notes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 text-sm"
-              />
+          <div className="space-y-3">
+            {/* Search and Filter Row */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by patient name, provider, appointment type, or notes..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 text-sm"
+                />
+                {searchTerm && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="Confirmed">Confirmed</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  <SelectItem value="No-Show">No-Show</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={providerFilter} onValueChange={setProviderFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <Stethoscope className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Providers</SelectItem>
+                  {uniqueProviders.map((provider) => (
+                    <SelectItem key={provider.name} value={provider.name}>
+                      <div className="flex flex-col">
+                        <span className="text-sm">{provider.name}</span>
+                        {provider.specialty && (
+                          <span className="text-xs text-muted-foreground">
+                            {provider.specialty}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Confirmed">Confirmed</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Cancelled">Cancelled</SelectItem>
-                <SelectItem value="No-Show">No-Show</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Active Filters Display */}
+            {hasActiveFilters && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">Active filters:</span>
+                
+                {searchTerm && (
+                  <Badge variant="secondary" className="text-xs">
+                    Search: "{searchTerm}"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 ml-1"
+                      onClick={() => setSearchTerm("")}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )}
+                
+                {statusFilter !== "all" && (
+                  <Badge variant="secondary" className="text-xs">
+                    Status: {statusFilter}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 ml-1"
+                      onClick={() => setStatusFilter("all")}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )}
+                
+                {providerFilter !== "all" && (
+                  <Badge variant="secondary" className="text-xs">
+                    Provider: {providerFilter}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 ml-1"
+                      onClick={() => setProviderFilter("all")}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="text-xs"
+                >
+                  Clear all
+                </Button>
+              </div>
+            )}
+
+            {/* Results Summary */}
+            <div className="text-sm text-muted-foreground">
+              Showing {filteredAppointments.length} of {appointments?.length || 0} appointments
+              {hasActiveFilters && (
+                <span className="ml-1">(filtered)</span>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -388,7 +535,9 @@ const TodaysAppointmentsPage = () => {
           <CardTitle className="text-lg sm:text-xl">Appointments ({filteredAppointments.length})</CardTitle>
           <CardDescription className="text-sm">
             {filteredAppointments.length === 0 && !isLoading
-              ? "No appointments found for today."
+              ? hasActiveFilters 
+                ? "No appointments match your current filters."
+                : "No appointments found for today."
               : "Click on an appointment to view details."}
           </CardDescription>
         </CardHeader>
@@ -411,10 +560,20 @@ const TodaysAppointmentsPage = () => {
               <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-base sm:text-lg font-medium">No appointments found</h3>
               <p className="text-muted-foreground text-sm">
-                {searchTerm || statusFilter !== "all"
+                {hasActiveFilters
                   ? "Try adjusting your search or filter criteria."
                   : "No appointments scheduled for today."}
               </p>
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="mt-3"
+                >
+                  Clear all filters
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-3 sm:space-y-4">
@@ -453,7 +612,7 @@ const TodaysAppointmentsPage = () => {
                             {format(parseISO(appointment.appointment_time), "h:mm a")}
                           </div>
                           <div className="flex items-center gap-1 truncate">
-                            <User className="h-3 w-3" />
+                            <Stethoscope className="h-3 w-3" />
                             <span className="truncate">{provider?.full_name || "No provider assigned"}</span>
                           </div>
                           <div className="flex items-center gap-1">
