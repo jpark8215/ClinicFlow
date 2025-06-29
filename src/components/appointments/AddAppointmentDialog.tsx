@@ -38,9 +38,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tables } from "@/integrations/supabase/types";
-import { CalendarIcon, Plus } from "lucide-react";
+import { CalendarIcon, Plus, UserPlus, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 const appointmentSchema = z.object({
   patientId: z.string().min(1, "Please select a patient"),
@@ -58,9 +59,11 @@ type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
 interface AddAppointmentDialogProps {
   onSuccess?: () => void;
+  defaultDate?: Date;
+  isOverbook?: boolean;
 }
 
-const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
+const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: AddAppointmentDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -74,7 +77,8 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
       duration: "30",
       appointmentType: "consultation",
       providerId: "",
-      notes: "",
+      notes: isOverbook ? "OVERBOOK: Scheduled to compensate for potential no-shows" : "",
+      appointmentDate: defaultDate || undefined,
     },
   });
 
@@ -140,6 +144,9 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
       const [hours, minutes] = data.appointmentTime.split(':');
       appointmentDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
+      // Calculate no-show risk for overbook appointments (typically lower since they're backup)
+      const noShowRisk = isOverbook ? Math.random() * 0.3 : Math.random() * 0.8; // Overbook slots have lower risk
+
       // Insert appointment
       const { data: appointment, error: appointmentError } = await supabase
         .from("appointments")
@@ -150,6 +157,7 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
           appointment_type: data.appointmentType,
           notes: data.notes || null,
           status: "Pending",
+          no_show_risk: noShowRisk,
         })
         .select()
         .single();
@@ -169,9 +177,15 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
         if (providerError) throw providerError;
       }
 
+      const successMessage = isOverbook 
+        ? "Overbook appointment created successfully"
+        : "Appointment created successfully";
+
       toast({
-        title: "Appointment Created",
-        description: "The appointment has been successfully scheduled.",
+        title: successMessage,
+        description: isOverbook 
+          ? "Additional appointment slot created to compensate for potential no-shows."
+          : "The appointment has been successfully scheduled.",
       });
 
       // Reset form and close dialog
@@ -181,6 +195,7 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
       // Refresh queries
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["todaysAppointments"] });
+      queryClient.invalidateQueries({ queryKey: ["upcomingAppointments"] });
       
       // Call success callback
       onSuccess?.();
@@ -196,21 +211,46 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
     }
   };
 
+  const dialogTitle = isOverbook ? "Create Overbook Appointment" : "Schedule New Appointment";
+  const dialogDescription = isOverbook 
+    ? "Create an additional appointment slot to compensate for potential no-shows."
+    : "Create a new appointment for a patient with a healthcare provider.";
+
+  const triggerButton = isOverbook ? (
+    <Button className="flex items-center gap-2 w-full">
+      <UserPlus className="h-4 w-4" />
+      Create Overbook Appointment
+    </Button>
+  ) : (
+    <Button className="flex items-center gap-2 w-full sm:w-auto">
+      <Plus className="h-4 w-4" />
+      <span className="hidden sm:inline">New Appointment</span>
+      <span className="sm:hidden">New</span>
+    </Button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2 w-full sm:w-auto">
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">New Appointment</span>
-          <span className="sm:hidden">New</span>
-        </Button>
+        {triggerButton}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Schedule New Appointment</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
+            {isOverbook ? <UserPlus className="h-5 w-5 text-blue-600" /> : <Plus className="h-5 w-5" />}
+            {dialogTitle}
+          </DialogTitle>
           <DialogDescription className="text-sm">
-            Create a new appointment for a patient with a healthcare provider.
+            {dialogDescription}
           </DialogDescription>
+          {isOverbook && (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <AlertTriangle className="h-4 w-4 text-blue-600" />
+              <div className="text-sm text-blue-700">
+                <strong>Overbook Strategy:</strong> This appointment is scheduled beyond normal capacity to compensate for expected no-shows.
+              </div>
+            </div>
+          )}
         </DialogHeader>
 
         <Form {...form}>
@@ -413,7 +453,10 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
                   <FormLabel className="text-sm">Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Add any additional notes or special instructions..."
+                      placeholder={isOverbook 
+                        ? "OVERBOOK: Scheduled to compensate for potential no-shows. Add any additional notes..."
+                        : "Add any additional notes or special instructions..."
+                      }
                       className="resize-none text-sm"
                       {...field}
                     />
@@ -436,7 +479,10 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
                 Cancel
               </Button>
               <Button type="submit" disabled={loading} className="w-full sm:w-auto" size="sm">
-                {loading ? "Creating..." : "Create Appointment"}
+                {loading 
+                  ? (isOverbook ? "Creating Overbook..." : "Creating...") 
+                  : (isOverbook ? "Create Overbook Appointment" : "Create Appointment")
+                }
               </Button>
             </div>
           </form>

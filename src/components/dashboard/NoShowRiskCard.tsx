@@ -52,9 +52,11 @@ import {
   Eye,
   Bell,
   MousePointer,
+  Plus,
 } from "lucide-react";
 import { format, addDays, parseISO, startOfDay, endOfDay } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import AddAppointmentDialog from "@/components/appointments/AddAppointmentDialog";
 
 type AppointmentWithPatient = Tables<"appointments"> & {
   patients: Pick<Tables<"patients">, "full_name" | "phone" | "email"> | null;
@@ -64,6 +66,8 @@ const NoShowRiskCard = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isHighRiskDialogOpen, setIsHighRiskDialogOpen] = useState(false);
   const [isDateDetailsOpen, setIsDateDetailsOpen] = useState(false);
+  const [isOverbookDialogOpen, setIsOverbookDialogOpen] = useState(false);
+  const [overbookDate, setOverbookDate] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -173,11 +177,8 @@ const NoShowRiskCard = () => {
   };
 
   const handleOverbook = async (dateStr: string) => {
-    // In a real implementation, this would create an overbook slot
-    toast({
-      title: "Overbook Slot Created",
-      description: `Additional appointment slot created for ${format(new Date(dateStr), "MMM d, yyyy")}`,
-    });
+    setOverbookDate(dateStr);
+    setIsOverbookDialogOpen(true);
   };
 
   const sendReminderToHighRisk = async (appointment: AppointmentWithPatient) => {
@@ -214,6 +215,19 @@ const NoShowRiskCard = () => {
   };
 
   const selectedDateData = riskForecastData.find(d => d.fullDate === selectedDate);
+
+  const handleOverbookSuccess = () => {
+    setIsOverbookDialogOpen(false);
+    setOverbookDate(null);
+    queryClient.invalidateQueries({ queryKey: ["upcomingAppointments"] });
+    queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    queryClient.invalidateQueries({ queryKey: ["todaysAppointments"] });
+    
+    toast({
+      title: "Overbook Appointment Created",
+      description: `Additional appointment slot created for ${overbookDate ? format(new Date(overbookDate), "MMM d, yyyy") : "selected date"}`,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -588,6 +602,72 @@ const NoShowRiskCard = () => {
           <div className="flex justify-end pt-4 border-t">
             <Button onClick={() => setIsDateDetailsOpen(false)}>
               Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Overbook Appointment Dialog */}
+      <Dialog open={isOverbookDialogOpen} onOpenChange={setIsOverbookDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-blue-600" />
+              Create Overbook Appointment
+            </DialogTitle>
+            <DialogDescription>
+              Schedule an additional appointment for {overbookDate ? format(new Date(overbookDate), "EEEE, MMMM d, yyyy") : "selected date"} to compensate for potential no-shows
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start gap-3">
+                <UserPlus className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h3 className="font-medium text-blue-900">What is an Overbook Appointment?</h3>
+                  <p className="text-sm text-blue-700 mt-1">
+                    An overbook appointment is scheduled beyond normal capacity to compensate for expected no-shows. 
+                    This helps maximize clinic utilization and reduce revenue loss from missed appointments.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {overbookDate && (
+              <div className="space-y-3">
+                <h4 className="font-medium">Risk Analysis for {format(new Date(overbookDate), "MMM d, yyyy")}</h4>
+                {(() => {
+                  const dateData = riskForecastData.find(d => d.fullDate === overbookDate);
+                  if (dateData) {
+                    return (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-muted rounded-lg text-center">
+                          <p className="text-lg font-bold">{dateData.totalAppointments}</p>
+                          <p className="text-xs text-muted-foreground">Scheduled</p>
+                        </div>
+                        <div className="p-3 bg-red-50 rounded-lg text-center">
+                          <p className="text-lg font-bold text-red-600">{dateData.highRiskCount}</p>
+                          <p className="text-xs text-muted-foreground">High Risk</p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+            )}
+
+            <AddAppointmentDialog 
+              onSuccess={handleOverbookSuccess}
+              defaultDate={overbookDate ? new Date(overbookDate) : undefined}
+              isOverbook={true}
+            />
+          </div>
+
+          <div className="flex justify-end pt-4 border-t">
+            <Button variant="outline" onClick={() => setIsOverbookDialogOpen(false)}>
+              Cancel
             </Button>
           </div>
         </DialogContent>
