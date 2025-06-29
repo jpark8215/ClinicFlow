@@ -6,13 +6,13 @@ import PreauthCard from "@/components/dashboard/PreauthCard";
 
 const Index = () => {
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2">
-      <div className="xl:col-span-1 space-y-6">
+    <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+      <div className="space-y-4 sm:space-y-6">
         <AppointmentsCard />
         <PreauthCard />
         <InsuranceEligibilityCard />
       </div>
-      <div className="xl:col-span-1 space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <NoShowRiskCard />
         <IntakeCard />
       </div>

@@ -93,7 +93,7 @@ const Auth = () => {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen px-4">
         <div className="space-y-2">
           <Skeleton className="h-8 w-[250px]" />
           <Skeleton className="h-8 w-[200px]" />
@@ -107,19 +107,19 @@ const Auth = () => {
   }
   
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-[400px]">
+    <div className="flex items-center justify-center min-h-screen bg-background px-4">
+      <div className="w-full max-w-[400px]">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
+            <TabsTrigger value="signup" className="text-sm">Sign Up</TabsTrigger>
           </TabsList>
           
           <TabsContent value="signin">
             <Card>
               <CardHeader>
-                <CardTitle>Sign In</CardTitle>
-                <CardDescription>Enter your credentials to access your account.</CardDescription>
+                <CardTitle className="text-lg sm:text-xl">Sign In</CardTitle>
+                <CardDescription className="text-sm">Enter your credentials to access your account.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
@@ -129,9 +129,9 @@ const Auth = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel className="text-sm">Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="m@example.com" {...field} />
+                            <Input placeholder="m@example.com" {...field} className="text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -142,15 +142,15 @@ const Auth = () => {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel className="text-sm">Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <Input type="password" {...field} className="text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button type="submit" className="w-full" disabled={loading} size="sm">
                       {loading ? "Signing In..." : "Sign In"}
                     </Button>
                   </form>
@@ -162,8 +162,8 @@ const Auth = () => {
           <TabsContent value="signup">
             <Card>
               <CardHeader>
-                <CardTitle>Sign Up</CardTitle>
-                <CardDescription>Create a new account.</CardDescription>
+                <CardTitle className="text-lg sm:text-xl">Sign Up</CardTitle>
+                <CardDescription className="text-sm">Create a new account.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
@@ -173,9 +173,9 @@ const Auth = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel className="text-sm">Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="m@example.com" {...field} />
+                            <Input placeholder="m@example.com" {...field} className="text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -186,15 +186,15 @@ const Auth = () => {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel className="text-sm">Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <Input type="password" {...field} className="text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button type="submit" className="w-full" disabled={loading} size="sm">
                       {loading ? "Signing Up..." : "Sign Up"}
                     </Button>
                   </form>

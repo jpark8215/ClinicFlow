@@ -210,46 +210,47 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 max-w-4xl">
-      <div className="mb-6 flex items-center gap-4">
+    <div className="container mx-auto py-4 px-4 sm:py-6 max-w-4xl">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={() => navigate("/")}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 self-start"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
+          <span className="hidden sm:inline">Back to Dashboard</span>
+          <span className="sm:hidden">Back</span>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Manage your account settings and preferences.
           </p>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Profile
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsTrigger value="profile" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-3 text-xs sm:text-sm">
+            <User className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span>Profile</span>
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Security
+          <TabsTrigger value="security" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-3 text-xs sm:text-sm">
+            <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span>Security</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Notifications
+          <TabsTrigger value="notifications" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-3 text-xs sm:text-sm">
+            <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span>Notifications</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="space-y-6">
+        <TabsContent value="profile" className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Profile Information</CardTitle>
+              <CardDescription className="text-sm">
                 Update your personal information and contact details.
               </CardDescription>
             </CardHeader>
@@ -261,9 +262,9 @@ const SettingsPage = () => {
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name</FormLabel>
+                        <FormLabel className="text-sm">Full Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your full name" {...field} />
+                          <Input placeholder="Enter your full name" {...field} className="text-sm" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -274,15 +275,15 @@ const SettingsPage = () => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address</FormLabel>
+                        <FormLabel className="text-sm">Email Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your email" {...field} />
+                          <Input placeholder="Enter your email" {...field} className="text-sm" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading} size="sm" className="w-full sm:w-auto">
                     {loading ? "Updating..." : "Update Profile"}
                   </Button>
                 </form>
@@ -292,32 +293,32 @@ const SettingsPage = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Account Information</CardTitle>
+              <CardDescription className="text-sm">
                 View your account details.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">User ID</Label>
-                  <p className="text-sm text-muted-foreground font-mono">{user?.id}</p>
+                  <Label className="text-xs sm:text-sm font-medium">User ID</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground font-mono break-all">{user?.id}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Account Created</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-xs sm:text-sm font-medium">Account Created</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Email Verified</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-xs sm:text-sm font-medium">Email Verified</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {user?.email_confirmed_at ? 'Yes' : 'No'}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Last Sign In</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-xs sm:text-sm font-medium">Last Sign In</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
@@ -326,11 +327,11 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="space-y-6">
+        <TabsContent value="security" className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Change Password</CardTitle>
+              <CardDescription className="text-sm">
                 Update your password to keep your account secure.
               </CardDescription>
             </CardHeader>
@@ -342,9 +343,9 @@ const SettingsPage = () => {
                     name="currentPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Current Password</FormLabel>
+                        <FormLabel className="text-sm">Current Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Enter current password" {...field} />
+                          <Input type="password" placeholder="Enter current password" {...field} className="text-sm" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -355,9 +356,9 @@ const SettingsPage = () => {
                     name="newPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>New Password</FormLabel>
+                        <FormLabel className="text-sm">New Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Enter new password" {...field} />
+                          <Input type="password" placeholder="Enter new password" {...field} className="text-sm" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -368,15 +369,15 @@ const SettingsPage = () => {
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormLabel className="text-sm">Confirm New Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Confirm new password" {...field} />
+                          <Input type="password" placeholder="Confirm new password" {...field} className="text-sm" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading} size="sm" className="w-full sm:w-auto">
                     {loading ? "Updating..." : "Change Password"}
                   </Button>
                 </form>
@@ -386,23 +387,23 @@ const SettingsPage = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Two-Factor Authentication</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Two-Factor Authentication</CardTitle>
+              <CardDescription className="text-sm">
                 Add an extra layer of security to your account.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <Label htmlFor="2fa">Enable Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <Label htmlFor="2fa" className="text-sm">Enable Two-Factor Authentication</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Secure your account with SMS or authenticator app
                     </p>
                   </div>
                   <Switch id="2fa" />
                 </div>
-                <Button variant="outline" disabled>
+                <Button variant="outline" disabled size="sm" className="w-full sm:w-auto">
                   Configure 2FA (Coming Soon)
                 </Button>
               </div>
@@ -410,11 +411,11 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value="notifications" className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Notification Preferences</CardTitle>
+              <CardDescription className="text-sm">
                 Choose what notifications you want to receive.
               </CardDescription>
             </CardHeader>
@@ -426,10 +427,10 @@ const SettingsPage = () => {
                       control={notificationForm.control}
                       name="emailNotifications"
                       render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
+                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <div>
-                            <FormLabel>Email Notifications</FormLabel>
-                            <p className="text-sm text-muted-foreground">
+                            <FormLabel className="text-sm">Email Notifications</FormLabel>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Receive notifications via email
                             </p>
                           </div>
@@ -449,10 +450,10 @@ const SettingsPage = () => {
                       control={notificationForm.control}
                       name="appointmentReminders"
                       render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
+                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <div>
-                            <FormLabel>Appointment Reminders</FormLabel>
-                            <p className="text-sm text-muted-foreground">
+                            <FormLabel className="text-sm">Appointment Reminders</FormLabel>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Get notified about upcoming appointments
                             </p>
                           </div>
@@ -470,10 +471,10 @@ const SettingsPage = () => {
                       control={notificationForm.control}
                       name="preauthUpdates"
                       render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
+                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <div>
-                            <FormLabel>Prior Authorization Updates</FormLabel>
-                            <p className="text-sm text-muted-foreground">
+                            <FormLabel className="text-sm">Prior Authorization Updates</FormLabel>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Receive updates on authorization status
                             </p>
                           </div>
@@ -491,10 +492,10 @@ const SettingsPage = () => {
                       control={notificationForm.control}
                       name="systemAlerts"
                       render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
+                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <div>
-                            <FormLabel>System Alerts</FormLabel>
-                            <p className="text-sm text-muted-foreground">
+                            <FormLabel className="text-sm">System Alerts</FormLabel>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Important system notifications and maintenance
                             </p>
                           </div>
@@ -509,7 +510,7 @@ const SettingsPage = () => {
                     />
                   </div>
                   
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading} size="sm" className="w-full sm:w-auto">
                     {loading ? "Saving..." : "Save Preferences"}
                   </Button>
                 </form>

@@ -199,31 +199,32 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
-          New Appointment
+          <span className="hidden sm:inline">New Appointment</span>
+          <span className="sm:hidden">New</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
         <DialogHeader>
-          <DialogTitle>Schedule New Appointment</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Schedule New Appointment</DialogTitle>
+          <DialogDescription className="text-sm">
             Create a new appointment for a patient with a healthcare provider.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             {/* Patient Selection */}
             <FormField
               control={form.control}
               name="patientId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Patient *</FormLabel>
+                  <FormLabel className="text-sm">Patient *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="text-sm">
                         <SelectValue placeholder="Select a patient" />
                       </SelectTrigger>
                     </FormControl>
@@ -231,7 +232,7 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
                       {patients?.map((patient) => (
                         <SelectItem key={patient.id} value={patient.id}>
                           <div className="flex flex-col">
-                            <span>{patient.full_name}</span>
+                            <span className="text-sm">{patient.full_name}</span>
                             {patient.phone && (
                               <span className="text-xs text-muted-foreground">
                                 {patient.phone}
@@ -248,20 +249,20 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
             />
 
             {/* Date and Time */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="appointmentDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date *</FormLabel>
+                    <FormLabel className="text-sm">Date *</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant={"outline"}
                             className={cn(
-                              "w-full pl-3 text-left font-normal",
+                              "w-full pl-3 text-left font-normal text-sm",
                               !field.value && "text-muted-foreground"
                             )}
                           >
@@ -296,10 +297,10 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
                 name="appointmentTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Time *</FormLabel>
+                    <FormLabel className="text-sm">Time *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue placeholder="Select time" />
                         </SelectTrigger>
                       </FormControl>
@@ -318,16 +319,16 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
             </div>
 
             {/* Duration and Type */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="duration"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Duration *</FormLabel>
+                    <FormLabel className="text-sm">Duration *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue placeholder="Select duration" />
                         </SelectTrigger>
                       </FormControl>
@@ -349,10 +350,10 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
                 name="appointmentType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type *</FormLabel>
+                    <FormLabel className="text-sm">Type *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
@@ -376,10 +377,10 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
               name="providerId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Healthcare Provider</FormLabel>
+                  <FormLabel className="text-sm">Healthcare Provider</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="text-sm">
                         <SelectValue placeholder="Select a provider (optional)" />
                       </SelectTrigger>
                     </FormControl>
@@ -387,7 +388,7 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
                       {providers?.map((provider) => (
                         <SelectItem key={provider.id} value={provider.id}>
                           <div className="flex flex-col">
-                            <span>{provider.full_name}</span>
+                            <span className="text-sm">{provider.full_name}</span>
                             {provider.specialty && (
                               <span className="text-xs text-muted-foreground">
                                 {provider.specialty}
@@ -409,11 +410,11 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+                  <FormLabel className="text-sm">Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Add any additional notes or special instructions..."
-                      className="resize-none"
+                      className="resize-none text-sm"
                       {...field}
                     />
                   </FormControl>
@@ -423,16 +424,18 @@ const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
             />
 
             {/* Form Actions */}
-            <div className="flex justify-end space-x-2 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
                 disabled={loading}
+                className="w-full sm:w-auto"
+                size="sm"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} className="w-full sm:w-auto" size="sm">
                 {loading ? "Creating..." : "Create Appointment"}
               </Button>
             </div>
