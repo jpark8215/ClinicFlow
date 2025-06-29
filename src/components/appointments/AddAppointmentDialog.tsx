@@ -38,12 +38,31 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tables } from "@/integrations/supabase/types";
-import { CalendarIcon, Plus, UserPlus, AlertTriangle, Clock, Users, CheckCircle, XCircle } from "lucide-react";
+import { 
+  CalendarIcon, 
+  Plus, 
+  UserPlus, 
+  AlertTriangle, 
+  Clock, 
+  Users, 
+  CheckCircle, 
+  XCircle,
+  User,
+  Stethoscope,
+  Phone,
+  Mail,
+  MapPin,
+  Timer,
+  FileText,
+  Activity
+} from "lucide-react";
 import { format, addMinutes, parseISO, isBefore, isAfter } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 
 const appointmentSchema = z.object({
   patientId: z.string().min(1, "Please select a patient"),
@@ -75,18 +94,29 @@ interface TimeConflict {
   status: string;
 }
 
+interface DetailedAppointment {
+  id: string;
+  patient_name: string;
+  patient_phone?: string;
+  patient_email?: string;
+  appointment_type: string;
+  provider_name?: string;
+  provider_specialty?: string;
+  status: string;
+  duration: number;
+  start_time: Date;
+  end_time: Date;
+  notes?: string;
+  isOverbook: boolean;
+}
+
 interface TimeSlotData {
   time: string;
+  displayTime: string;
   available: boolean;
-  appointments: Array<{
-    id: string;
-    patient_name: string;
-    appointment_type: string;
-    provider_name?: string;
-    status: string;
-    duration: number;
-  }>;
+  appointments: DetailedAppointment[];
   overbookCount: number;
+  totalAppointments: number;
 }
 
 const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: AddAppointmentDialogProps) => {
@@ -143,7 +173,7 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
     },
   });
 
-  // Fetch existing appointments for conflict detection
+  // Fetch existing appointments for conflict detection and visual display
   const { data: existingAppointments } = useQuery({
     queryKey: ["appointmentsForConflictCheck", watchedValues.appointmentDate],
     queryFn: async () => {
@@ -163,9 +193,9 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
           appointment_type,
           status,
           notes,
-          patients (full_name),
+          patients (full_name, phone, email),
           appointments_providers (
-            providers (full_name)
+            providers (full_name, specialty)
           )
         `)
         .gte("appointment_time", startOfDay.toISOString())
@@ -253,14 +283,37 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
     { value: "120", label: "2 hours" },
   ];
 
-  // Generate time slot data for visual chart
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Confirmed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "Pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "overbook":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  // Generate detailed time slot data for visual chart
   const getTimeSlotData = (): TimeSlotData[] => {
     if (!watchedValues.appointmentDate || !existingAppointments) {
       return timeSlots.map(time => ({
         time,
+        displayTime: format(new Date(`2000-01-01T${time}:00`), "h:mm a"),
         available: true,
         appointments: [],
         overbookCount: 0,
+        totalAppointments: 0,
       }));
     }
 
@@ -270,7 +323,7 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
       slotStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       const slotEnd = addMinutes(slotStart, 30); // Standard 30-minute slots
 
-      const slotAppointments: any[] = [];
+      const slotAppointments: DetailedAppointment[] = [];
       let overbookCount = 0;
 
       existingAppointments.forEach((appointment: any) => {
@@ -285,26 +338,42 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
         if (hasOverlap) {
           const isOverbookAppointment = appointment.notes?.includes("OVERBOOK");
           
+          const detailedAppointment: DetailedAppointment = {
+            id: appointment.id,
+            patient_name: appointment.patients?.full_name || "Unknown Patient",
+            patient_phone: appointment.patients?.phone,
+            patient_email: appointment.patients?.email,
+            appointment_type: appointment.appointment_type || "consultation",
+            provider_name: appointment.appointments_providers?.[0]?.providers?.full_name,
+            provider_specialty: appointment.appointments_providers?.[0]?.providers?.specialty,
+            status: appointment.status,
+            duration: appointment.duration_minutes || 30,
+            start_time: appointmentStart,
+            end_time: appointmentEnd,
+            notes: appointment.notes,
+            isOverbook: isOverbookAppointment,
+          };
+
           if (isOverbookAppointment) {
             overbookCount++;
-          } else {
-            slotAppointments.push({
-              id: appointment.id,
-              patient_name: appointment.patients?.full_name || "Unknown Patient",
-              appointment_type: appointment.appointment_type || "consultation",
-              provider_name: appointment.appointments_providers?.[0]?.providers?.full_name,
-              status: appointment.status,
-              duration: appointment.duration_minutes || 30,
-            });
           }
+          
+          slotAppointments.push(detailedAppointment);
         }
       });
 
+      // Sort appointments by start time
+      slotAppointments.sort((a, b) => a.start_time.getTime() - b.start_time.getTime());
+
+      const regularAppointments = slotAppointments.filter(apt => !apt.isOverbook);
+
       return {
         time: timeSlot,
-        available: slotAppointments.length === 0,
+        displayTime: format(new Date(`2000-01-01T${timeSlot}:00`), "h:mm a"),
+        available: regularAppointments.length === 0,
         appointments: slotAppointments,
         overbookCount,
+        totalAppointments: slotAppointments.length,
       };
     });
   };
@@ -439,7 +508,7 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
       <DialogTrigger asChild>
         {triggerButton}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
             {isOverbook ? <UserPlus className="h-5 w-5 text-blue-600" /> : <Plus className="h-5 w-5" />}
@@ -815,7 +884,7 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
                       <div>
                         <span className="text-muted-foreground">Total Appointments:</span>
                         <span className="ml-2 font-medium">
-                          {timeSlotData.reduce((sum, slot) => sum + slot.appointments.length, 0)}
+                          {timeSlotData.reduce((sum, slot) => sum + slot.totalAppointments, 0)}
                         </span>
                       </div>
                       <div>
@@ -859,11 +928,11 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
           <TabsContent value="schedule" className="space-y-4">
             {watchedValues.appointmentDate ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <h3 className="text-lg font-semibold">
                     Schedule for {format(watchedValues.appointmentDate, "EEEE, MMMM d, yyyy")}
                   </h3>
-                  <div className="flex items-center gap-4 text-sm">
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
                       <span>Available</span>
@@ -879,81 +948,179 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto">
                   {timeSlotData.map((slot) => (
                     <div
                       key={slot.time}
                       className={cn(
-                        "p-3 border rounded-lg cursor-pointer transition-colors",
+                        "p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md",
                         slot.available 
                           ? "bg-green-50 border-green-200 hover:bg-green-100" 
-                          : "bg-red-50 border-red-200",
-                        watchedValues.appointmentTime === slot.time && "ring-2 ring-primary"
+                          : "bg-red-50 border-red-200 hover:bg-red-100",
+                        watchedValues.appointmentTime === slot.time && "ring-2 ring-primary shadow-lg"
                       )}
                       onClick={() => handleTimeSlotClick(slot.time)}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">{slot.time}</span>
-                        <div className="flex items-center gap-1">
+                      {/* Time Slot Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-semibold text-lg">{slot.displayTime}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
                           {slot.available ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <Badge className="bg-green-100 text-green-800 border-green-300">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Available
+                            </Badge>
                           ) : (
-                            <XCircle className="h-4 w-4 text-red-600" />
+                            <Badge className="bg-red-100 text-red-800 border-red-300">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Booked
+                            </Badge>
                           )}
                           {slot.overbookCount > 0 && (
-                            <Badge variant="outline" className="text-xs text-blue-600">
+                            <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                              <UserPlus className="h-3 w-3 mr-1" />
                               +{slot.overbookCount}
                             </Badge>
                           )}
                         </div>
                       </div>
 
-                      {slot.appointments.length > 0 && (
-                        <div className="space-y-1">
-                          {slot.appointments.slice(0, 2).map((appointment, index) => (
-                            <div key={appointment.id} className="text-xs text-muted-foreground">
-                              <div className="font-medium">{appointment.patient_name}</div>
-                              <div className="flex items-center gap-1">
-                                <span>{appointment.appointment_type}</span>
-                                {appointment.provider_name && (
-                                  <span>• {appointment.provider_name}</span>
-                                )}
+                      {/* Appointments List */}
+                      {slot.appointments.length > 0 ? (
+                        <div className="space-y-3">
+                          {slot.appointments.map((appointment, index) => (
+                            <div key={appointment.id} className="space-y-2">
+                              {index > 0 && <Separator />}
+                              
+                              {/* Patient Information */}
+                              <div className="flex items-start gap-3">
+                                <Avatar className="h-8 w-8 mt-1">
+                                  <AvatarFallback className="text-xs">
+                                    {getInitials(appointment.patient_name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium text-sm truncate">
+                                      {appointment.patient_name}
+                                    </h4>
+                                    <Badge className={`text-xs ${getStatusColor(appointment.isOverbook ? "overbook" : appointment.status)}`}>
+                                      {appointment.isOverbook ? "Overbook" : appointment.status}
+                                    </Badge>
+                                  </div>
+                                  
+                                  {/* Appointment Details */}
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      <Timer className="h-3 w-3" />
+                                      <span>
+                                        {format(appointment.start_time, "h:mm a")} - {format(appointment.end_time, "h:mm a")}
+                                        ({appointment.duration} min)
+                                      </span>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      <FileText className="h-3 w-3" />
+                                      <span className="capitalize">{appointment.appointment_type}</span>
+                                    </div>
+                                    
+                                    {appointment.provider_name && (
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Stethoscope className="h-3 w-3" />
+                                        <span>{appointment.provider_name}</span>
+                                        {appointment.provider_specialty && (
+                                          <span className="text-muted-foreground">
+                                            • {appointment.provider_specialty}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {appointment.patient_phone && (
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Phone className="h-3 w-3" />
+                                        <span>{appointment.patient_phone}</span>
+                                      </div>
+                                    )}
+                                    
+                                    {appointment.patient_email && (
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Mail className="h-3 w-3" />
+                                        <span className="truncate">{appointment.patient_email}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           ))}
-                          {slot.appointments.length > 2 && (
-                            <div className="text-xs text-muted-foreground">
-                              +{slot.appointments.length - 2} more
-                            </div>
-                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-4">
+                          <div className="text-green-600 mb-2">
+                            <CheckCircle className="h-8 w-8 mx-auto" />
+                          </div>
+                          <p className="text-sm text-green-700 font-medium">
+                            Available Time Slot
+                          </p>
+                          <p className="text-xs text-green-600 mt-1">
+                            Click to select this time
+                          </p>
                         </div>
                       )}
 
-                      {slot.available && (
-                        <div className="text-xs text-green-600 mt-2">
-                          Click to select this time
-                        </div>
-                      )}
-
+                      {/* Overbook Availability Notice */}
                       {!slot.available && isOverbook && (
-                        <div className="text-xs text-blue-600 mt-2">
-                          Available for overbook
+                        <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
+                          <div className="flex items-center gap-2 text-blue-700">
+                            <UserPlus className="h-4 w-4" />
+                            <span className="text-xs font-medium">
+                              Available for overbook appointment
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Selection Indicator */}
+                      {watchedValues.appointmentTime === slot.time && (
+                        <div className="mt-3 p-2 bg-primary/10 rounded border border-primary/20">
+                          <div className="flex items-center gap-2 text-primary">
+                            <Activity className="h-4 w-4" />
+                            <span className="text-xs font-medium">
+                              Selected for new appointment
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
 
-                <div className="text-sm text-muted-foreground">
-                  Click on any time slot to select it for your appointment. 
-                  {isOverbook && " As an overbook appointment, you can select any time slot, even if it's already booked."}
+                <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                  <p className="font-medium mb-1">How to use the visual schedule:</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>• <strong>Green slots:</strong> Available for booking</li>
+                    <li>• <strong>Red slots:</strong> Already booked with existing appointments</li>
+                    <li>• <strong>Blue badges:</strong> Show overbook appointments (+1, +2, etc.)</li>
+                    <li>• Click any time slot to select it for your new appointment</li>
+                    {isOverbook && (
+                      <li>• <strong>Overbook mode:</strong> You can select any time slot, even if already booked</li>
+                    )}
+                  </ul>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Please select a date first to view the schedule
+              <div className="text-center py-12">
+                <CalendarIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  Select a Date to View Schedule
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Choose an appointment date in the form to see the detailed visual schedule with patient and provider information.
                 </p>
               </div>
             )}
