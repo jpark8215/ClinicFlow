@@ -1,0 +1,446 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Tables } from "@/integrations/supabase/types";
+import { CalendarIcon, Plus } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+
+const appointmentSchema = z.object({
+  patientId: z.string().min(1, "Please select a patient"),
+  appointmentDate: z.date({
+    required_error: "Please select an appointment date",
+  }),
+  appointmentTime: z.string().min(1, "Please select an appointment time"),
+  duration: z.string().min(1, "Please select duration"),
+  appointmentType: z.string().min(1, "Please select appointment type"),
+  providerId: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+type AppointmentFormData = z.infer<typeof appointmentSchema>;
+
+interface AddAppointmentDialogProps {
+  onSuccess?: () => void;
+}
+
+const AddAppointmentDialog = ({ onSuccess }: AddAppointmentDialogProps) => {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const form = useForm<AppointmentFormData>({
+    resolver: zodResolver(appointmentSchema),
+    defaultValues: {
+      patientId: "",
+      appointmentTime: "",
+      duration: "30",
+      appointmentType: "consultation",
+      providerId: "",
+      notes: "",
+    },
+  });
+
+  // Fetch patients
+  const { data: patients } = useQuery<Tables<"patients">[]>({
+    queryKey: ["patients"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("patients")
+        .select("*")
+        .order("full_name");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch providers
+  const { data: providers } = useQuery<Tables<"providers">[]>({
+    queryKey: ["providers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("providers")
+        .select("*")
+        .eq("is_active", true)
+        .order("full_name");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const timeSlots = [
+    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+    "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
+    "17:00", "17:30", "18:00"
+  ];
+
+  const appointmentTypes = [
+    { value: "consultation", label: "Consultation" },
+    { value: "follow-up", label: "Follow-up" },
+    { value: "procedure", label: "Procedure" },
+    { value: "screening", label: "Screening" },
+    { value: "emergency", label: "Emergency" },
+    { value: "physical", label: "Physical Exam" },
+  ];
+
+  const durations = [
+    { value: "15", label: "15 minutes" },
+    { value: "30", label: "30 minutes" },
+    { value: "45", label: "45 minutes" },
+    { value: "60", label: "1 hour" },
+    { value: "90", label: "1.5 hours" },
+    { value: "120", label: "2 hours" },
+  ];
+
+  const onSubmit = async (data: AppointmentFormData) => {
+    setLoading(true);
+    try {
+      // Combine date and time
+      const appointmentDateTime = new Date(data.appointmentDate);
+      const [hours, minutes] = data.appointmentTime.split(':');
+      appointmentDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+      // Insert appointment
+      const { data: appointment, error: appointmentError } = await supabase
+        .from("appointments")
+        .insert({
+          patient_id: data.patientId,
+          appointment_time: appointmentDateTime.toISOString(),
+          duration_minutes: parseInt(data.duration),
+          appointment_type: data.appointmentType,
+          notes: data.notes || null,
+          status: "Pending",
+        })
+        .select()
+        .single();
+
+      if (appointmentError) throw appointmentError;
+
+      // Link provider if selected
+      if (data.providerId && appointment) {
+        const { error: providerError } = await supabase
+          .from("appointments_providers")
+          .insert({
+            appointment_id: appointment.id,
+            provider_id: data.providerId,
+            role: "Primary",
+          });
+
+        if (providerError) throw providerError;
+      }
+
+      toast({
+        title: "Appointment Created",
+        description: "The appointment has been successfully scheduled.",
+      });
+
+      // Reset form and close dialog
+      form.reset();
+      setOpen(false);
+      
+      // Refresh queries
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["todaysAppointments"] });
+      
+      // Call success callback
+      onSuccess?.();
+
+    } catch (error: any) {
+      toast({
+        title: "Error Creating Appointment",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          New Appointment
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Schedule New Appointment</DialogTitle>
+          <DialogDescription>
+            Create a new appointment for a patient with a healthcare provider.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Patient Selection */}
+            <FormField
+              control={form.control}
+              name="patientId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Patient *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a patient" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {patients?.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id}>
+                          <div className="flex flex-col">
+                            <span>{patient.full_name}</span>
+                            {patient.phone && (
+                              <span className="text-xs text-muted-foreground">
+                                {patient.phone}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Date and Time */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="appointmentDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date *</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date < new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="appointmentTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Time *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select time" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {timeSlots.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Duration and Type */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="duration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duration *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select duration" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {durations.map((duration) => (
+                          <SelectItem key={duration.value} value={duration.value}>
+                            {duration.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="appointmentType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {appointmentTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Provider Selection */}
+            <FormField
+              control={form.control}
+              name="providerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Healthcare Provider</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a provider (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {providers?.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          <div className="flex flex-col">
+                            <span>{provider.full_name}</span>
+                            {provider.specialty && (
+                              <span className="text-xs text-muted-foreground">
+                                {provider.specialty}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Notes */}
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Add any additional notes or special instructions..."
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Form Actions */}
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Creating..." : "Create Appointment"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default AddAppointmentDialog;

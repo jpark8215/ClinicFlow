@@ -52,7 +52,6 @@ import {
   Search,
   Filter,
   ArrowLeft,
-  Plus,
   Edit,
   Trash2,
   FileText,
@@ -61,6 +60,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, isToday, parseISO } from "date-fns";
+import AddAppointmentDialog from "@/components/appointments/AddAppointmentDialog";
 
 type AppointmentWithDetails = Tables<"appointments"> & {
   patients: Pick<Tables<"patients">, "full_name" | "phone" | "email" | "address"> | null;
@@ -275,10 +275,7 @@ const TodaysAppointmentsPage = () => {
             </p>
           </div>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Appointment
-        </Button>
+        <AddAppointmentDialog onSuccess={() => refetch()} />
       </div>
 
       {/* Statistics Cards */}
