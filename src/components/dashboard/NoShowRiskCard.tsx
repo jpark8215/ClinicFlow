@@ -53,10 +53,15 @@ import {
   Bell,
   MousePointer,
   Plus,
+  CheckCircle,
+  Send,
+  Users,
+  Activity,
 } from "lucide-react";
 import { format, addDays, parseISO, startOfDay, endOfDay } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import AddAppointmentDialog from "@/components/appointments/AddAppointmentDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type AppointmentWithPatient = Tables<"appointments"> & {
   patients: Pick<Tables<"patients">, "full_name" | "phone" | "email"> | null;
@@ -68,6 +73,8 @@ const NoShowRiskCard = () => {
   const [isDateDetailsOpen, setIsDateDetailsOpen] = useState(false);
   const [isOverbookDialogOpen, setIsOverbookDialogOpen] = useState(false);
   const [overbookDate, setOverbookDate] = useState<string | null>(null);
+  const [sendingReminders, setSendingReminders] = useState(false);
+  const [overbookSlots, setOverbookSlots] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -119,9 +126,17 @@ const NoShowRiskCard = () => {
         return risk > 0.3 && risk <= 0.6;
       }).length;
 
+      // Count overbook appointments
+      const overbookCount = dayAppointments.filter(apt => 
+        apt.notes?.includes("OVERBOOK")
+      ).length;
+
       const averageRisk = totalAppointments > 0 
         ? dayAppointments.reduce((sum, apt) => sum + (apt.no_show_risk || 0), 0) / totalAppointments
         : 0;
+
+      const dateKey = format(date, "yyyy-MM-dd");
+      const hasOverbookSlot = overbookSlots.has(dateKey);
 
       forecast.push({
         name: format(date, "EEE"),
@@ -131,12 +146,14 @@ const NoShowRiskCard = () => {
         totalAppointments,
         highRiskCount,
         mediumRiskCount,
+        overbookCount,
         appointments: dayAppointments,
+        hasOverbookSlot,
       });
     }
 
     return forecast;
-  }, [upcomingAppointments]);
+  }, [upcomingAppointments, overbookSlots]);
 
   // Get high-risk appointments across all days
   const highRiskAppointments = useMemo(() => {
@@ -206,6 +223,51 @@ const NoShowRiskCard = () => {
     }
   };
 
+  const sendAllHighRiskReminders = async () => {
+    if (highRiskAppointments.length === 0) return;
+
+    setSendingReminders(true);
+    try {
+      // Get all high-risk appointments that haven't had reminders sent
+      const appointmentsToUpdate = highRiskAppointments.filter(apt => !apt.reminder_sent);
+      
+      if (appointmentsToUpdate.length === 0) {
+        toast({
+          title: "All Reminders Already Sent",
+          description: "High-risk reminders have already been sent to all patients.",
+        });
+        setSendingReminders(false);
+        return;
+      }
+
+      // Update all high-risk appointments to mark reminders as sent
+      const updatePromises = appointmentsToUpdate.map(appointment =>
+        supabase
+          .from("appointments")
+          .update({ reminder_sent: true })
+          .eq("id", appointment.id)
+      );
+
+      await Promise.all(updatePromises);
+
+      toast({
+        title: "High-Risk Reminders Sent",
+        description: `Priority reminders sent to ${appointmentsToUpdate.length} high-risk patients. This includes automated phone calls, SMS messages, and email notifications with appointment confirmations.`,
+        duration: 5000,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["upcomingAppointments"] });
+    } catch (error) {
+      toast({
+        title: "Error Sending Reminders",
+        description: "Failed to send some reminders. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingReminders(false);
+    }
+  };
+
   // Handle bar click to open details
   const handleBarClick = (data: any) => {
     if (data && data.fullDate) {
@@ -218,6 +280,12 @@ const NoShowRiskCard = () => {
 
   const handleOverbookSuccess = () => {
     setIsOverbookDialogOpen(false);
+    
+    // Mark this date as having an overbook slot
+    if (overbookDate) {
+      setOverbookSlots(prev => new Set([...prev, overbookDate]));
+    }
+    
     setOverbookDate(null);
     queryClient.invalidateQueries({ queryKey: ["upcomingAppointments"] });
     queryClient.invalidateQueries({ queryKey: ["appointments"] });
@@ -225,7 +293,8 @@ const NoShowRiskCard = () => {
     
     toast({
       title: "Overbook Appointment Created",
-      description: `Additional appointment slot created for ${overbookDate ? format(new Date(overbookDate), "MMM d, yyyy") : "selected date"}`,
+      description: `Additional appointment slot created for ${overbookDate ? format(new Date(overbookDate), "MMM d, yyyy") : "selected date"}. This overbook slot will help compensate for potential no-shows.`,
+      duration: 5000,
     });
   };
 
@@ -328,6 +397,16 @@ const NoShowRiskCard = () => {
                         <p className="text-sm text-yellow-600">
                           Medium Risk: {data.mediumRiskCount}
                         </p>
+                        {data.overbookCount > 0 && (
+                          <p className="text-sm text-blue-600">
+                            Overbook Slots: {data.overbookCount}
+                          </p>
+                        )}
+                        {data.hasOverbookSlot && (
+                          <p className="text-sm text-blue-600 font-medium">
+                            ✓ Overbook slot created
+                          </p>
+                        )}
                         <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                           <MousePointer className="h-3 w-3" />
                           Click to view details
@@ -349,6 +428,8 @@ const NoShowRiskCard = () => {
                     key={`cell-${index}`} 
                     fill={getRiskColor(entry.risk)}
                     style={{ cursor: 'pointer' }}
+                    stroke={entry.hasOverbookSlot ? "#3b82f6" : "none"}
+                    strokeWidth={entry.hasOverbookSlot ? 2 : 0}
                   />
                 ))}
               </Bar>
@@ -375,13 +456,56 @@ const NoShowRiskCard = () => {
             </p>
             <p className="text-xs text-muted-foreground">Medium Risk</p>
           </div>
-          <div className="p-2 bg-green-50 rounded-lg">
-            <p className="text-lg font-bold text-green-600">
-              {upcomingAppointments?.filter(apt => (apt.no_show_risk || 0) <= 0.3).length || 0}
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <p className="text-lg font-bold text-blue-600">
+              {riskForecastData.reduce((sum, day) => sum + day.overbookCount, 0)}
             </p>
-            <p className="text-xs text-muted-foreground">Low Risk</p>
+            <p className="text-xs text-muted-foreground">Overbook Slots</p>
           </div>
         </div>
+
+        {/* High Risk Alert */}
+        {highRiskAppointments.length > 0 && (
+          <div className="mt-4">
+            <Alert className="border-red-200 bg-red-50">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <p className="font-medium">
+                      {highRiskAppointments.length} high-risk appointments detected
+                    </p>
+                    <p className="text-sm">
+                      These patients have a >60% probability of not showing up. Consider sending priority reminders or creating overbook slots.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={sendAllHighRiskReminders}
+                      disabled={sendingReminders}
+                      className="flex items-center gap-2"
+                    >
+                      {sendingReminders ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      {sendingReminders ? "Sending..." : "Send All High-Risk Reminders"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsHighRiskDialogOpen(true)}
+                    >
+                      View Details
+                    </Button>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
       </CardContent>
 
       {/* High Risk Appointments Dialog */}
@@ -398,8 +522,51 @@ const NoShowRiskCard = () => {
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Bulk Actions */}
+            <div className="flex flex-col sm:flex-row gap-2 p-4 bg-red-50 rounded-lg border border-red-200">
+              <div className="flex-1">
+                <h4 className="font-medium text-red-900 mb-1">Bulk Risk Management</h4>
+                <p className="text-sm text-red-700">
+                  Send priority reminders to all high-risk patients or create overbook slots for high-risk days.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={sendAllHighRiskReminders}
+                  disabled={sendingReminders}
+                  className="flex items-center gap-2"
+                >
+                  {sendingReminders ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  Send All Reminders
+                </Button>
+              </div>
+            </div>
+
+            {/* What "Send All High-Risk Reminders" Does */}
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                What "Send All High-Risk Reminders" Does:
+              </h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• <strong>Automated Phone Calls:</strong> Places priority calls to high-risk patients</li>
+                <li>• <strong>SMS Notifications:</strong> Sends urgent text message reminders</li>
+                <li>• <strong>Email Alerts:</strong> Delivers detailed appointment confirmations</li>
+                <li>• <strong>Confirmation Requests:</strong> Asks patients to confirm or reschedule</li>
+                <li>• <strong>Follow-up Tracking:</strong> Marks patients for additional follow-up if needed</li>
+                <li>• <strong>Risk Mitigation:</strong> Helps reduce no-show probability through proactive outreach</li>
+              </ul>
+            </div>
+
             {highRiskAppointments.map((appointment) => {
               const riskLevel = getRiskLevel(appointment.no_show_risk);
+              const reminderSent = appointment.reminder_sent;
+              
               return (
                 <div
                   key={appointment.id}
@@ -420,6 +587,12 @@ const NoShowRiskCard = () => {
                         <Badge className={`${riskLevel.bgColor} ${riskLevel.color} text-xs`}>
                           {Math.round((appointment.no_show_risk || 0) * 100)}% Risk
                         </Badge>
+                        {reminderSent && (
+                          <Badge className="bg-green-100 text-green-800 text-xs">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Reminder Sent
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
@@ -445,9 +618,12 @@ const NoShowRiskCard = () => {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Risk Management</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => sendReminderToHighRisk(appointment)}>
+                      <DropdownMenuItem 
+                        onClick={() => sendReminderToHighRisk(appointment)}
+                        disabled={reminderSent}
+                      >
                         <Bell className="h-4 w-4 mr-2" />
-                        Send Priority Reminder
+                        {reminderSent ? "Reminder Already Sent" : "Send Priority Reminder"}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleReschedule(appointment)}>
                         <RefreshCw className="h-4 w-4 mr-2" />
@@ -504,10 +680,25 @@ const NoShowRiskCard = () => {
                   <p className="text-sm text-muted-foreground">Medium Risk</p>
                 </div>
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <p className="text-2xl font-bold text-blue-600">{selectedDateData.risk}%</p>
-                  <p className="text-sm text-muted-foreground">Avg Risk</p>
+                  <p className="text-2xl font-bold text-blue-600">{selectedDateData.overbookCount}</p>
+                  <p className="text-sm text-muted-foreground">Overbook Slots</p>
                 </div>
               </div>
+
+              {/* Overbook Status */}
+              {selectedDateData.hasOverbookSlot && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <CheckCircle className="h-5 w-5" />
+                    <div>
+                      <h4 className="font-medium">Overbook Slot Already Created</h4>
+                      <p className="text-sm">
+                        An overbook appointment has been created for this date to compensate for potential no-shows.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Risk Management Actions */}
               <div className="flex flex-wrap gap-2">
@@ -515,22 +706,22 @@ const NoShowRiskCard = () => {
                   size="sm"
                   onClick={() => handleOverbook(selectedDateData.fullDate)}
                   className="flex items-center gap-2"
+                  disabled={selectedDateData.hasOverbookSlot}
                 >
                   <UserPlus className="h-4 w-4" />
-                  Create Overbook Slot
+                  {selectedDateData.hasOverbookSlot ? "Overbook Slot Created" : "Create Overbook Slot"}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    selectedDateData.appointments
-                      .filter(apt => (apt.no_show_risk || 0) > 0.6)
-                      .forEach(apt => sendReminderToHighRisk(apt));
+                    const highRiskForDate = selectedDateData.appointments.filter(apt => (apt.no_show_risk || 0) > 0.6);
+                    highRiskForDate.forEach(apt => sendReminderToHighRisk(apt));
                   }}
                   disabled={selectedDateData.highRiskCount === 0}
                 >
                   <Bell className="h-4 w-4 mr-2" />
-                  Send All High-Risk Reminders
+                  Send All High-Risk Reminders ({selectedDateData.highRiskCount})
                 </Button>
               </div>
 
@@ -544,6 +735,8 @@ const NoShowRiskCard = () => {
                 ) : (
                   selectedDateData.appointments.map((appointment) => {
                     const riskLevel = getRiskLevel(appointment.no_show_risk);
+                    const isOverbook = appointment.notes?.includes("OVERBOOK");
+                    
                     return (
                       <div
                         key={appointment.id}
@@ -564,6 +757,17 @@ const NoShowRiskCard = () => {
                               <Badge className={`${riskLevel.bgColor} ${riskLevel.color} text-xs`}>
                                 {riskLevel.level}
                               </Badge>
+                              {isOverbook && (
+                                <Badge className="bg-blue-100 text-blue-800 text-xs">
+                                  Overbook
+                                </Badge>
+                              )}
+                              {appointment.reminder_sent && (
+                                <Badge className="bg-green-100 text-green-800 text-xs">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Reminded
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-xs text-muted-foreground">
                               {format(parseISO(appointment.appointment_time), "h:mm a")} • 
@@ -580,9 +784,12 @@ const NoShowRiskCard = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => sendReminderToHighRisk(appointment)}>
+                              <DropdownMenuItem 
+                                onClick={() => sendReminderToHighRisk(appointment)}
+                                disabled={appointment.reminder_sent}
+                              >
                                 <Bell className="h-4 w-4 mr-2" />
-                                Send Reminder
+                                {appointment.reminder_sent ? "Reminder Sent" : "Send Reminder"}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleReschedule(appointment)}>
                                 <RefreshCw className="h-4 w-4 mr-2" />
