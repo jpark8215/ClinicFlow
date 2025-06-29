@@ -52,47 +52,12 @@ const Header = () => {
     navigate("/");
   };
 
-  const getPageTitle = () => {
-    switch (location.pathname) {
-      case "/":
-        return "Dashboard";
-      case "/schedule":
-        return "Smart Scheduling";
-      case "/preauth":
-        return "Prior Authorization";
-      case "/intake":
-        return "Intake Automation";
-      case "/patients":
-        return "Patient List";
-      case "/insurance-eligibility":
-        return "Insurance Eligibility";
-      case "/settings":
-        return "Settings";
-      default:
-        return "Dashboard";
-    }
-  };
-
   const isOnDashboard = location.pathname === "/";
 
   return (
     <header className="flex items-center h-16 px-6 border-b bg-card">
-      <div className="flex items-center gap-4 flex-1">
-        {!isOnDashboard && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleDashboard}
-            className="flex items-center gap-2 text-primary hover:text-primary hover:bg-primary/10"
-          >
-            <Home className="h-4 w-4" />
-            Dashboard
-          </Button>
-        )}
-        <div className="flex items-center gap-2">
-          {!isOnDashboard && <span className="text-muted-foreground">•</span>}
-          <h1 className="text-2xl font-semibold">{getPageTitle()}</h1>
-        </div>
+      <div className="flex-1">
+        <h1 className="text-2xl font-bold text-primary">ClinicFlow</h1>
       </div>
       <div className="flex items-center gap-4">
         <div className="relative">
