@@ -218,23 +218,6 @@ const TodaysAppointmentsPage = () => {
     }
   };
 
-  const getStatusIcon = (status: Enums<"appointment_status">) => {
-    switch (status) {
-      case "Confirmed":
-        return <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />;
-      case "Pending":
-        return <Clock className="h-3 w-3 sm:h-4 sm:w-4" />;
-      case "Cancelled":
-        return <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />;
-      case "Completed":
-        return <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />;
-      case "No-Show":
-        return <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />;
-      default:
-        return <Clock className="h-3 w-3 sm:h-4 sm:w-4" />;
-    }
-  };
-
   const getRiskLevel = (risk: number | null) => {
     if (!risk) return { level: "Low", color: "text-green-600", bgColor: "bg-green-50" };
     if (risk < 0.3) return { level: "Low", color: "text-green-600", bgColor: "bg-green-50" };
@@ -561,8 +544,8 @@ const TodaysAppointmentsPage = () => {
               <h3 className="text-base sm:text-lg font-medium">No appointments found</h3>
               <p className="text-muted-foreground text-sm">
                 {hasActiveFilters
-                  ? "Try adjusting your search or filter criteria."
-                  : "No appointments scheduled for today."}
+                   ? "Try adjusting your search or filter criteria."
+                   : "No appointments scheduled for today."}
               </p>
               {hasActiveFilters && (
                 <Button
@@ -853,6 +836,24 @@ const TodaysAppointmentsPage = () => {
       </Dialog>
     </div>
   );
+};
+
+// Helper function to get status icon
+const getStatusIcon = (status: Enums<"appointment_status">) => {
+  switch (status) {
+    case "Confirmed":
+      return <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />;
+    case "Pending":
+      return <Clock className="h-3 w-3 sm:h-4 sm:w-4" />;
+    case "Cancelled":
+      return <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />;
+    case "Completed":
+      return <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />;
+    case "No-Show":
+      return <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />;
+    default:
+      return <Clock className="h-3 w-3 sm:h-4 sm:w-4" />;
+  }
 };
 
 export default TodaysAppointmentsPage;
