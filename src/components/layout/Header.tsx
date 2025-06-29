@@ -1,4 +1,4 @@
-import { Search, Bell, LogOut } from "lucide-react";
+import { Search, Bell, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -43,6 +43,10 @@ const Header = () => {
     }
   };
 
+  const handleSettings = () => {
+    navigate("/settings");
+  };
+
   return (
     <header className="flex items-center h-16 px-6 border-b bg-card">
       <div className="flex-1">
@@ -74,6 +78,11 @@ const Header = () => {
                 </p>
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSettings}>
+              <SettingsIcon className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
               <LogOut className="mr-2 h-4 w-4" />

@@ -69,10 +69,20 @@ const Sidebar = () => {
         ))}
       </nav>
       <div className="p-4 border-t space-y-2">
-          <Button variant="ghost" className="w-full justify-start gap-3">
-              <Settings className="h-4 w-4" />
-              Settings
-          </Button>
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-md transition-colors w-full",
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              )
+            }
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+          </NavLink>
            <Button 
              variant="ghost" 
              className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10" 
