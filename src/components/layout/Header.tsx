@@ -1,5 +1,4 @@
-import { Search, Bell, LogOut, Settings as SettingsIcon, Home } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Bell, LogOut, Settings as SettingsIcon, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -60,10 +59,6 @@ const Header = () => {
         <h1 className="text-xl sm:text-2xl font-bold text-primary">ClinicFlow</h1>
       </div>
       <div className="flex items-center gap-2 sm:gap-4">
-        <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." className="pl-9 w-32 sm:w-auto" />
-        </div>
         <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
           <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>

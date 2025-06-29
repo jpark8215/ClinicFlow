@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -28,6 +28,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { User, Bell, Shield, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Tables } from "@/integrations/supabase/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Schema for password change
 const passwordSchema = z.object({
@@ -89,6 +92,64 @@ const SettingsPage = () => {
       systemAlerts: true,
     },
   });
+
+  // Fetch user profile data
+  const { data: userData, isLoading: userLoading } = useQuery<Tables<"users">>({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) throw new Error("User not authenticated");
+      
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch user preferences
+  const { data: userPreferences, isLoading: preferencesLoading } = useQuery<Tables<"user_preferences">>({
+    queryKey: ["userPreferences", user?.id],
+    queryFn: async () => {
+      if (!user?.id) throw new Error("User not authenticated");
+      
+      const { data, error } = await supabase
+        .from("user_preferences")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (error && error.code !== "PGRST116") throw error; // PGRST116 is "no rows returned"
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Update profile form when user data is loaded
+  useEffect(() => {
+    if (userData) {
+      profileForm.reset({
+        fullName: userData.full_name || "",
+        email: userData.email,
+      });
+    }
+  }, [userData, profileForm]);
+
+  // Update notification preferences form when preferences are loaded
+  useEffect(() => {
+    if (userPreferences) {
+      notificationForm.reset({
+        emailNotifications: userPreferences.email_notifications ?? true,
+        appointmentReminders: userPreferences.appointment_reminders ?? true,
+        preauthUpdates: userPreferences.preauth_updates ?? true,
+        systemAlerts: userPreferences.system_alerts ?? true,
+      });
+    }
+  }, [userPreferences, notificationForm]);
 
   const handlePasswordChange = async (values: z.infer<typeof passwordSchema>) => {
     setLoading(true);
@@ -255,39 +316,47 @@ const SettingsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...profileForm}>
-                <form onSubmit={profileForm.handleSubmit(handleProfileUpdate)} className="space-y-4">
-                  <FormField
-                    control={profileForm.control}
-                    name="fullName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm">Full Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your full name" {...field} className="text-sm" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={profileForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm">Email Address</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your email" {...field} className="text-sm" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={loading} size="sm" className="w-full sm:w-auto">
-                    {loading ? "Updating..." : "Update Profile"}
-                  </Button>
-                </form>
-              </Form>
+              {userLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-32" />
+                </div>
+              ) : (
+                <Form {...profileForm}>
+                  <form onSubmit={profileForm.handleSubmit(handleProfileUpdate)} className="space-y-4">
+                    <FormField
+                      control={profileForm.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your full name" {...field} className="text-sm" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={profileForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Email Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your email" {...field} className="text-sm" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" disabled={loading} size="sm" className="w-full sm:w-auto">
+                      {loading ? "Updating..." : "Update Profile"}
+                    </Button>
+                  </form>
+                </Form>
+              )}
             </CardContent>
           </Card>
 
@@ -299,30 +368,39 @@ const SettingsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium">User ID</Label>
-                  <p className="text-xs sm:text-sm text-muted-foreground font-mono break-all">{user?.id}</p>
+              {userLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
                 </div>
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium">Account Created</Label>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                  </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs sm:text-sm font-medium">User ID</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground font-mono break-all">{user?.id}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs sm:text-sm font-medium">Account Created</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-xs sm:text-sm font-medium">Email Verified</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {user?.email_confirmed_at ? 'Yes' : 'No'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-xs sm:text-sm font-medium">Last Sign In</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium">Email Verified</Label>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    {user?.email_confirmed_at ? 'Yes' : 'No'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium">Last Sign In</Label>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -420,101 +498,111 @@ const SettingsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...notificationForm}>
-                <form onSubmit={notificationForm.handleSubmit(handleNotificationUpdate)} className="space-y-6">
-                  <div className="space-y-4">
-                    <FormField
-                      control={notificationForm.control}
-                      name="emailNotifications"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                          <div>
-                            <FormLabel className="text-sm">Email Notifications</FormLabel>
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Receive notifications via email
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+              {preferencesLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-32" />
+                </div>
+              ) : (
+                <Form {...notificationForm}>
+                  <form onSubmit={notificationForm.handleSubmit(handleNotificationUpdate)} className="space-y-6">
+                    <div className="space-y-4">
+                      <FormField
+                        control={notificationForm.control}
+                        name="emailNotifications"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                              <FormLabel className="text-sm">Email Notifications</FormLabel>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                Receive notifications via email
+                              </p>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Separator />
+                      
+                      <FormField
+                        control={notificationForm.control}
+                        name="appointmentReminders"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                              <FormLabel className="text-sm">Appointment Reminders</FormLabel>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                Get notified about upcoming appointments
+                              </p>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={notificationForm.control}
+                        name="preauthUpdates"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                              <FormLabel className="text-sm">Prior Authorization Updates</FormLabel>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                Receive updates on authorization status
+                              </p>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={notificationForm.control}
+                        name="systemAlerts"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                              <FormLabel className="text-sm">System Alerts</FormLabel>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                Important system notifications and maintenance
+                              </p>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     
-                    <Separator />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="appointmentReminders"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                          <div>
-                            <FormLabel className="text-sm">Appointment Reminders</FormLabel>
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Get notified about upcoming appointments
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="preauthUpdates"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                          <div>
-                            <FormLabel className="text-sm">Prior Authorization Updates</FormLabel>
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Receive updates on authorization status
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="systemAlerts"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                          <div>
-                            <FormLabel className="text-sm">System Alerts</FormLabel>
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Important system notifications and maintenance
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <Button type="submit" disabled={loading} size="sm" className="w-full sm:w-auto">
-                    {loading ? "Saving..." : "Save Preferences"}
-                  </Button>
-                </form>
-              </Form>
+                    <Button type="submit" disabled={loading} size="sm" className="w-full sm:w-auto">
+                      {loading ? "Saving..." : "Save Preferences"}
+                    </Button>
+                  </form>
+                </Form>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
