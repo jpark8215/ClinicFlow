@@ -1,4 +1,3 @@
-
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -12,8 +11,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../ui/use-toast";
+import { useAuth } from "../auth/AuthProvider";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Gauge },
@@ -26,9 +25,10 @@ const navItems = [
 const Sidebar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signOut } = useAuth();
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await signOut();
     if (error) {
       toast({
         title: "Error logging out",
@@ -68,12 +68,16 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-      <div className="p-4 border-t">
+      <div className="p-4 border-t space-y-2">
           <Button variant="ghost" className="w-full justify-start gap-3">
               <Settings className="h-4 w-4" />
               Settings
           </Button>
-           <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:text-destructive" onClick={handleLogout}>
+           <Button 
+             variant="ghost" 
+             className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10" 
+             onClick={handleLogout}
+           >
               <LogOut className="h-4 w-4" />
               Log Out
           </Button>
