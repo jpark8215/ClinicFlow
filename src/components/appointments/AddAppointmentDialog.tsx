@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -38,10 +38,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tables } from "@/integrations/supabase/types";
-import { CalendarIcon, Plus, UserPlus, AlertTriangle } from "lucide-react";
-import { format } from "date-fns";
+import { CalendarIcon, Plus, UserPlus, AlertTriangle, Clock, Users } from "lucide-react";
+import { format, addMinutes, parseISO, isBefore, isAfter } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const appointmentSchema = z.object({
   patientId: z.string().min(1, "Please select a patient"),
@@ -63,9 +64,20 @@ interface AddAppointmentDialogProps {
   isOverbook?: boolean;
 }
 
+interface TimeConflict {
+  id: string;
+  patient_name: string;
+  start_time: Date;
+  end_time: Date;
+  appointment_type: string;
+  provider_name?: string;
+}
+
 const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: AddAppointmentDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [timeConflicts, setTimeConflicts] = useState<TimeConflict[]>([]);
+  const [showConflictWarning, setShowConflictWarning] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -81,6 +93,9 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
       appointmentDate: defaultDate || undefined,
     },
   });
+
+  // Watch form values for conflict detection
+  const watchedValues = form.watch();
 
   // Fetch patients
   const { data: patients } = useQuery<Tables<"patients">[]>({
@@ -111,6 +126,87 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
     },
   });
 
+  // Fetch existing appointments for conflict detection
+  const { data: existingAppointments } = useQuery({
+    queryKey: ["appointmentsForConflictCheck", watchedValues.appointmentDate],
+    queryFn: async () => {
+      if (!watchedValues.appointmentDate) return [];
+
+      const startOfDay = new Date(watchedValues.appointmentDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(watchedValues.appointmentDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+          id,
+          appointment_time,
+          duration_minutes,
+          appointment_type,
+          status,
+          patients (full_name),
+          appointments_providers (
+            providers (full_name)
+          )
+        `)
+        .gte("appointment_time", startOfDay.toISOString())
+        .lte("appointment_time", endOfDay.toISOString())
+        .in("status", ["Confirmed", "Pending"])
+        .order("appointment_time");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!watchedValues.appointmentDate,
+  });
+
+  // Check for time conflicts whenever relevant form values change
+  useEffect(() => {
+    if (!watchedValues.appointmentDate || !watchedValues.appointmentTime || !watchedValues.duration || !existingAppointments) {
+      setTimeConflicts([]);
+      setShowConflictWarning(false);
+      return;
+    }
+
+    const checkTimeConflicts = () => {
+      const newAppointmentStart = new Date(watchedValues.appointmentDate);
+      const [hours, minutes] = watchedValues.appointmentTime.split(':');
+      newAppointmentStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      const newAppointmentEnd = addMinutes(newAppointmentStart, parseInt(watchedValues.duration));
+
+      const conflicts: TimeConflict[] = [];
+
+      existingAppointments.forEach((appointment: any) => {
+        const existingStart = parseISO(appointment.appointment_time);
+        const existingEnd = addMinutes(existingStart, appointment.duration_minutes || 30);
+
+        // Check if appointments overlap
+        const hasOverlap = (
+          (isBefore(newAppointmentStart, existingEnd) && isAfter(newAppointmentEnd, existingStart)) ||
+          (isBefore(existingStart, newAppointmentEnd) && isAfter(existingEnd, newAppointmentStart))
+        );
+
+        if (hasOverlap) {
+          conflicts.push({
+            id: appointment.id,
+            patient_name: appointment.patients?.full_name || "Unknown Patient",
+            start_time: existingStart,
+            end_time: existingEnd,
+            appointment_type: appointment.appointment_type || "consultation",
+            provider_name: appointment.appointments_providers?.[0]?.providers?.full_name,
+          });
+        }
+      });
+
+      setTimeConflicts(conflicts);
+      setShowConflictWarning(conflicts.length > 0);
+    };
+
+    checkTimeConflicts();
+  }, [watchedValues.appointmentDate, watchedValues.appointmentTime, watchedValues.duration, existingAppointments]);
+
   const timeSlots = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
     "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
@@ -136,7 +232,48 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
     { value: "120", label: "2 hours" },
   ];
 
+  // Get available time slots (excluding conflicted ones)
+  const getAvailableTimeSlots = () => {
+    if (!watchedValues.appointmentDate || !watchedValues.duration || !existingAppointments) {
+      return timeSlots;
+    }
+
+    const duration = parseInt(watchedValues.duration);
+    
+    return timeSlots.filter(timeSlot => {
+      const testDate = new Date(watchedValues.appointmentDate);
+      const [hours, minutes] = timeSlot.split(':');
+      testDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      const testEndTime = addMinutes(testDate, duration);
+
+      // Check if this time slot conflicts with existing appointments
+      const hasConflict = existingAppointments.some((appointment: any) => {
+        const existingStart = parseISO(appointment.appointment_time);
+        const existingEnd = addMinutes(existingStart, appointment.duration_minutes || 30);
+
+        return (
+          (isBefore(testDate, existingEnd) && isAfter(testEndTime, existingStart)) ||
+          (isBefore(existingStart, testEndTime) && isAfter(existingEnd, testDate))
+        );
+      });
+
+      return !hasConflict;
+    });
+  };
+
+  const availableTimeSlots = getAvailableTimeSlots();
+
   const onSubmit = async (data: AppointmentFormData) => {
+    // Show warning if there are conflicts and it's not an overbook
+    if (timeConflicts.length > 0 && !isOverbook) {
+      toast({
+        title: "Time Conflict Detected",
+        description: `This time slot conflicts with ${timeConflicts.length} existing appointment(s). Please choose a different time or create an overbook appointment.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // Combine date and time
@@ -191,11 +328,14 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
       // Reset form and close dialog
       form.reset();
       setOpen(false);
+      setTimeConflicts([]);
+      setShowConflictWarning(false);
       
       // Refresh queries
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["todaysAppointments"] });
       queryClient.invalidateQueries({ queryKey: ["upcomingAppointments"] });
+      queryClient.invalidateQueries({ queryKey: ["appointmentsForConflictCheck"] });
       
       // Call success callback
       onSuccess?.();
@@ -337,7 +477,14 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
                 name="appointmentTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm">Time *</FormLabel>
+                    <FormLabel className="text-sm flex items-center gap-2">
+                      Time *
+                      {availableTimeSlots.length < timeSlots.length && (
+                        <Badge variant="outline" className="text-xs">
+                          {availableTimeSlots.length} available
+                        </Badge>
+                      )}
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="text-sm">
@@ -345,11 +492,26 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {timeSlots.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
+                        {timeSlots.map((time) => {
+                          const isAvailable = availableTimeSlots.includes(time);
+                          return (
+                            <SelectItem 
+                              key={time} 
+                              value={time}
+                              disabled={!isAvailable && !isOverbook}
+                              className={!isAvailable ? "opacity-50" : ""}
+                            >
+                              <div className="flex items-center justify-between w-full">
+                                <span>{time}</span>
+                                {!isAvailable && (
+                                  <Badge variant="secondary" className="text-xs ml-2">
+                                    Booked
+                                  </Badge>
+                                )}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -357,6 +519,41 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
                 )}
               />
             </div>
+
+            {/* Time Conflict Warning */}
+            {showConflictWarning && (
+              <Alert className="border-orange-200 bg-orange-50">
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="text-orange-800">
+                  <div className="space-y-2">
+                    <p className="font-medium">
+                      Time Conflict Detected ({timeConflicts.length} appointment{timeConflicts.length > 1 ? 's' : ''})
+                    </p>
+                    <div className="space-y-1">
+                      {timeConflicts.map((conflict, index) => (
+                        <div key={conflict.id} className="text-sm flex items-center gap-2">
+                          <Clock className="h-3 w-3" />
+                          <span>
+                            {conflict.patient_name} - {format(conflict.start_time, "h:mm a")} to {format(conflict.end_time, "h:mm a")}
+                            {conflict.provider_name && ` (${conflict.provider_name})`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {!isOverbook && (
+                      <p className="text-sm">
+                        Please choose a different time slot or create an overbook appointment to proceed.
+                      </p>
+                    )}
+                    {isOverbook && (
+                      <p className="text-sm">
+                        This overbook appointment will be scheduled despite the conflict to compensate for potential no-shows.
+                      </p>
+                    )}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Duration and Type */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -466,6 +663,28 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
               )}
             />
 
+            {/* Availability Summary */}
+            {watchedValues.appointmentDate && (
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    Availability for {format(watchedValues.appointmentDate, "MMM d, yyyy")}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Available slots:</span>
+                    <span className="ml-2 font-medium text-green-600">{availableTimeSlots.length}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Booked slots:</span>
+                    <span className="ml-2 font-medium text-red-600">{timeSlots.length - availableTimeSlots.length}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Form Actions */}
             <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4 border-t">
               <Button
@@ -478,7 +697,12 @@ const AddAppointmentDialog = ({ onSuccess, defaultDate, isOverbook = false }: Ad
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto" size="sm">
+              <Button 
+                type="submit" 
+                disabled={loading || (timeConflicts.length > 0 && !isOverbook)} 
+                className="w-full sm:w-auto" 
+                size="sm"
+              >
                 {loading 
                   ? (isOverbook ? "Creating Overbook..." : "Creating...") 
                   : (isOverbook ? "Create Overbook Appointment" : "Create Appointment")
