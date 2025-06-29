@@ -26,9 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, Key, User, Bell, Shield } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { User, Bell, Shield } from "lucide-react";
 
 // Schema for password change
 const passwordSchema = z.object({
@@ -52,7 +50,6 @@ const notificationSchema = z.object({
   appointmentReminders: z.boolean(),
   preauthUpdates: z.boolean(),
   systemAlerts: z.boolean(),
-  marketingEmails: z.boolean(),
 });
 
 const SettingsPage = () => {
@@ -88,7 +85,6 @@ const SettingsPage = () => {
       appointmentReminders: true,
       preauthUpdates: true,
       systemAlerts: true,
-      marketingEmails: false,
     },
   });
 
@@ -177,12 +173,30 @@ const SettingsPage = () => {
   const handleNotificationUpdate = async (values: z.infer<typeof notificationSchema>) => {
     setLoading(true);
     try {
-      // In a real app, you would save these preferences to a user_preferences table
-      // For now, we'll just show a success message
-      toast({
-        title: "Notification preferences updated",
-        description: "Your notification settings have been saved.",
-      });
+      // Update user preferences in the database
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: user?.id,
+          email_notifications: values.emailNotifications,
+          appointment_reminders: values.appointmentReminders,
+          preauth_updates: values.preauthUpdates,
+          system_alerts: values.systemAlerts,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        toast({
+          title: "Error updating preferences",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Notification preferences updated",
+          description: "Your notification settings have been saved.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -191,27 +205,6 @@ const SettingsPage = () => {
       });
     }
     setLoading(false);
-  };
-
-  const handleDeleteAccount = async () => {
-    if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      setLoading(true);
-      try {
-        // In a real app, you would implement account deletion logic
-        toast({
-          title: "Account deletion requested",
-          description: "Please contact support to complete account deletion.",
-          variant: "destructive",
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      }
-      setLoading(false);
-    }
   };
 
   return (
@@ -224,7 +217,7 @@ const SettingsPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile
@@ -236,10 +229,6 @@ const SettingsPage = () => {
           <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             Notifications
-          </TabsTrigger>
-          <TabsTrigger value="account" className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
-            Account
           </TabsTrigger>
         </TabsList>
 
@@ -285,6 +274,41 @@ const SettingsPage = () => {
                   </Button>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Information</CardTitle>
+              <CardDescription>
+                View your account details.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">User ID</Label>
+                  <p className="text-sm text-muted-foreground font-mono">{user?.id}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Account Created</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Email Verified</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {user?.email_confirmed_at ? 'Yes' : 'No'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Last Sign In</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -470,27 +494,6 @@ const SettingsPage = () => {
                         </FormItem>
                       )}
                     />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="marketingEmails"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
-                          <div>
-                            <FormLabel>Marketing Emails</FormLabel>
-                            <p className="text-sm text-muted-foreground">
-                              Receive product updates and newsletters
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
                   </div>
                   
                   <Button type="submit" disabled={loading}>
@@ -498,81 +501,6 @@ const SettingsPage = () => {
                   </Button>
                 </form>
               </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="account" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>
-                View your account details and manage your subscription.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">User ID</Label>
-                  <p className="text-sm text-muted-foreground font-mono">{user?.id}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Account Created</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Email Verified</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {user?.email_confirmed_at ? 'Yes' : 'No'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Last Sign In</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Data Export</CardTitle>
-              <CardDescription>
-                Download a copy of your data for your records.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" disabled>
-                Export Data (Coming Soon)
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive">Danger Zone</CardTitle>
-              <CardDescription>
-                Irreversible and destructive actions.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Deleting your account will permanently remove all your data and cannot be undone.
-                </AlertDescription>
-              </Alert>
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteAccount}
-                disabled={loading}
-              >
-                Delete Account
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
