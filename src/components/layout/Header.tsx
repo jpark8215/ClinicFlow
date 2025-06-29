@@ -13,6 +13,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../ui/use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
+import NotificationPopover from "./NotificationPopover";
 
 const Header = () => {
   const { user } = useAuth();
@@ -59,9 +60,7 @@ const Header = () => {
         <h1 className="text-xl sm:text-2xl font-bold text-primary">ClinicFlow</h1>
       </div>
       <div className="flex items-center gap-2 sm:gap-4">
-        <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
-          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-        </Button>
+        <NotificationPopover />
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
