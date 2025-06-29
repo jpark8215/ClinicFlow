@@ -24,8 +24,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
 
 const authSchema = z.object({
   email: z.string().email(),
@@ -93,11 +91,6 @@ const Auth = () => {
     setLoading(false);
   };
 
-  const handleDemoLogin = () => {
-    form.setValue("email", "admin@clinicflow.com");
-    form.setValue("password", "admin123");
-  };
-
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -115,21 +108,7 @@ const Auth = () => {
   
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-[400px] space-y-4">
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Demo Account:</strong> Use email "admin@clinicflow.com" and password "admin123" to try the application.
-            <Button 
-              variant="link" 
-              className="p-0 h-auto ml-2 text-primary"
-              onClick={handleDemoLogin}
-            >
-              Fill demo credentials
-            </Button>
-          </AlertDescription>
-        </Alert>
-
+      <div className="w-[400px]">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
