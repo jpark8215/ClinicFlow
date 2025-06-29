@@ -13,7 +13,7 @@ const DummyDataLoader = () => {
   const loadDummyData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('insert_dummy_data');
+      const { data, error } = await supabase.rpc('insert_dummy_data', {});
       
       if (error) {
         throw error;
