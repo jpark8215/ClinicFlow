@@ -51,6 +51,7 @@ import {
   TrendingUp,
   Eye,
   Bell,
+  MousePointer,
 } from "lucide-react";
 import { format, addDays, parseISO, startOfDay, endOfDay } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -204,6 +205,14 @@ const NoShowRiskCard = () => {
     }
   };
 
+  // Handle bar click to open details
+  const handleBarClick = (data: any) => {
+    if (data && data.fullDate) {
+      setSelectedDate(data.fullDate);
+      setIsDateDetailsOpen(true);
+    }
+  };
+
   const selectedDateData = riskForecastData.find(d => d.fullDate === selectedDate);
 
   if (isLoading) {
@@ -229,8 +238,12 @@ const NoShowRiskCard = () => {
               <TrendingUp className="h-5 w-5" />
               No-Show Risk Forecast
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="flex items-center gap-2">
               Predicted risk for the upcoming week with actionable insights
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <MousePointer className="h-3 w-3" />
+                Click bars for details
+              </div>
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -261,7 +274,11 @@ const NoShowRiskCard = () => {
       <CardContent>
         <div className="h-60 mb-4">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={riskForecastData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+            <BarChart 
+              data={riskForecastData} 
+              margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+              onClick={handleBarClick}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis 
                 dataKey="name" 
@@ -297,26 +314,28 @@ const NoShowRiskCard = () => {
                         <p className="text-sm text-yellow-600">
                           Medium Risk: {data.mediumRiskCount}
                         </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="mt-2 w-full"
-                          onClick={() => {
-                            setSelectedDate(data.fullDate);
-                            setIsDateDetailsOpen(true);
-                          }}
-                        >
-                          View Details
-                        </Button>
+                        <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                          <MousePointer className="h-3 w-3" />
+                          Click to view details
+                        </p>
                       </div>
                     );
                   }
                   return null;
                 }}
               />
-              <Bar dataKey="risk" radius={[4, 4, 0, 0]}>
+              <Bar 
+                dataKey="risk" 
+                radius={[4, 4, 0, 0]}
+                style={{ cursor: 'pointer' }}
+                onClick={handleBarClick}
+              >
                 {riskForecastData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getRiskColor(entry.risk)} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={getRiskColor(entry.risk)}
+                    style={{ cursor: 'pointer' }}
+                  />
                 ))}
               </Bar>
             </BarChart>
