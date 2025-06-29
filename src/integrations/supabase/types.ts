@@ -12,33 +12,42 @@ export type Database = {
       appointments: {
         Row: {
           appointment_time: string
+          appointment_type: string | null
           created_at: string
+          duration_minutes: number | null
           id: string
           no_show_risk: number | null
           notes: string | null
           patient_id: string
+          reminder_sent: boolean | null
           status: Database["public"]["Enums"]["appointment_status"]
           updated_at: string
           user_id: string
         }
         Insert: {
           appointment_time: string
+          appointment_type?: string | null
           created_at?: string
+          duration_minutes?: number | null
           id?: string
           no_show_risk?: number | null
           notes?: string | null
           patient_id: string
+          reminder_sent?: boolean | null
           status?: Database["public"]["Enums"]["appointment_status"]
           updated_at?: string
           user_id?: string
         }
         Update: {
           appointment_time?: string
+          appointment_type?: string | null
           created_at?: string
+          duration_minutes?: number | null
           id?: string
           no_show_risk?: number | null
           notes?: string | null
           patient_id?: string
+          reminder_sent?: boolean | null
           status?: Database["public"]["Enums"]["appointment_status"]
           updated_at?: string
           user_id?: string
@@ -49,6 +58,147 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointments_providers: {
+        Row: {
+          appointment_id: string
+          created_at: string | null
+          id: string
+          provider_id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string | null
+          id?: string
+          provider_id: string
+          role?: string | null
+          user_id?: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string | null
+          id?: string
+          provider_id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_providers_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_providers_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_providers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_templates: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          template_content: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          template_content: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          template_content?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -95,6 +245,13 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "insurance_eligibility_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       intake_tasks: {
@@ -136,74 +293,421 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "intake_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read_at: string | null
+          related_id: string | null
+          related_table: string | null
+          scheduled_for: string | null
+          status: Database["public"]["Enums"]["notification_status"] | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read_at?: string | null
+          related_id?: string | null
+          related_table?: string | null
+          scheduled_for?: string | null
+          status?: Database["public"]["Enums"]["notification_status"] | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read_at?: string | null
+          related_id?: string | null
+          related_table?: string | null
+          scheduled_for?: string | null
+          status?: Database["public"]["Enums"]["notification_status"] | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_documents: {
+        Row: {
+          created_at: string | null
+          document_content: string | null
+          document_name: string
+          document_type: string | null
+          document_url: string | null
+          file_size: number | null
+          id: string
+          is_signed: boolean | null
+          patient_id: string
+          signed_at: string | null
+          signed_by: string | null
+          template_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_content?: string | null
+          document_name: string
+          document_type?: string | null
+          document_url?: string | null
+          file_size?: number | null
+          id?: string
+          is_signed?: boolean | null
+          patient_id: string
+          signed_at?: string | null
+          signed_by?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string | null
+          document_content?: string | null
+          document_name?: string
+          document_type?: string | null
+          document_url?: string | null
+          file_size?: number | null
+          id?: string
+          is_signed?: boolean | null
+          patient_id?: string
+          signed_at?: string | null
+          signed_by?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_insurance: {
+        Row: {
+          copay_amount: number | null
+          created_at: string | null
+          deductible_amount: number | null
+          effective_date: string | null
+          expiration_date: string | null
+          group_number: string | null
+          id: string
+          insurance_company: string
+          is_primary: boolean | null
+          patient_id: string
+          policy_number: string
+          relationship_to_subscriber: string | null
+          subscriber_name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          copay_amount?: number | null
+          created_at?: string | null
+          deductible_amount?: number | null
+          effective_date?: string | null
+          expiration_date?: string | null
+          group_number?: string | null
+          id?: string
+          insurance_company: string
+          is_primary?: boolean | null
+          patient_id: string
+          policy_number: string
+          relationship_to_subscriber?: string | null
+          subscriber_name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          copay_amount?: number | null
+          created_at?: string | null
+          deductible_amount?: number | null
+          effective_date?: string | null
+          expiration_date?: string | null
+          group_number?: string | null
+          id?: string
+          insurance_company?: string
+          is_primary?: boolean | null
+          patient_id?: string
+          policy_number?: string
+          relationship_to_subscriber?: string | null
+          subscriber_name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_insurance_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_insurance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       patients: {
         Row: {
+          address: string | null
           created_at: string
+          date_of_birth: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           full_name: string
           id: string
+          phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name: string
           id?: string
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string
           id?: string
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "patients_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pre_authorizations: {
         Row: {
+          approved_amount: number | null
+          authorization_number: string | null
           created_at: string
+          expiration_date: string | null
           id: string
           notes: string | null
           patient_name: string
           payer: string
+          requested_amount: number | null
           service: string
           status: Database["public"]["Enums"]["preauth_status"]
           updated_at: string
           user_id: string
         }
         Insert: {
+          approved_amount?: number | null
+          authorization_number?: string | null
           created_at?: string
+          expiration_date?: string | null
           id?: string
           notes?: string | null
           patient_name: string
           payer: string
+          requested_amount?: number | null
           service: string
           status?: Database["public"]["Enums"]["preauth_status"]
           updated_at?: string
           user_id?: string
         }
         Update: {
+          approved_amount?: number | null
+          authorization_number?: string | null
           created_at?: string
+          expiration_date?: string | null
           id?: string
           notes?: string | null
           patient_name?: string
           payer?: string
+          requested_amount?: number | null
           service?: string
           status?: Database["public"]["Enums"]["preauth_status"]
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pre_authorizations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      providers: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string
+          id: string
+          is_active: boolean | null
+          license_number: string | null
+          phone: string | null
+          specialty: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          is_active?: boolean | null
+          license_number?: string | null
+          phone?: string | null
+          specialty?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          license_number?: string | null
+          phone?: string | null
+          specialty?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "providers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
-      [_ in never]: never
+      appointment_details: {
+        Row: {
+          appointment_time: string | null
+          appointment_type: string | null
+          created_at: string | null
+          duration_minutes: number | null
+          id: string | null
+          no_show_risk: number | null
+          notes: string | null
+          patient_email: string | null
+          patient_name: string | null
+          patient_phone: string | null
+          provider_name: string | null
+          provider_specialty: string | null
+          reminder_sent: boolean | null
+          status: Database["public"]["Enums"]["appointment_status"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      insert_dummy_data: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       appointment_status:
@@ -214,6 +718,13 @@ export type Database = {
         | "No-Show"
       eligibility_status: "Eligible" | "Ineligible" | "Pending" | "Error"
       intake_status: "Pending OCR" | "Needs Validation" | "Complete"
+      notification_status: "unread" | "read" | "archived"
+      notification_type:
+        | "appointment_reminder"
+        | "preauth_update"
+        | "eligibility_check"
+        | "document_required"
+        | "system_alert"
       preauth_status: "Pending" | "Approved" | "Denied" | "Submitted"
     }
     CompositeTypes: {
@@ -339,6 +850,14 @@ export const Constants = {
       ],
       eligibility_status: ["Eligible", "Ineligible", "Pending", "Error"],
       intake_status: ["Pending OCR", "Needs Validation", "Complete"],
+      notification_status: ["unread", "read", "archived"],
+      notification_type: [
+        "appointment_reminder",
+        "preauth_update", 
+        "eligibility_check",
+        "document_required",
+        "system_alert",
+      ],
       preauth_status: ["Pending", "Approved", "Denied", "Submitted"],
     },
   },
