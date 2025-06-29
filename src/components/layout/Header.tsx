@@ -1,4 +1,4 @@
-import { Search, Bell, LogOut, Settings as SettingsIcon } from "lucide-react";
+import { Search, Bell, LogOut, Settings as SettingsIcon, Home } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,12 +13,13 @@ import {
 import { useAuth } from "../auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../ui/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Header = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const getInitials = (email: string | undefined) => {
     if (!email) return "U";
@@ -47,10 +48,51 @@ const Header = () => {
     navigate("/settings");
   };
 
+  const handleDashboard = () => {
+    navigate("/");
+  };
+
+  const getPageTitle = () => {
+    switch (location.pathname) {
+      case "/":
+        return "Dashboard";
+      case "/schedule":
+        return "Smart Scheduling";
+      case "/preauth":
+        return "Prior Authorization";
+      case "/intake":
+        return "Intake Automation";
+      case "/patients":
+        return "Patient List";
+      case "/insurance-eligibility":
+        return "Insurance Eligibility";
+      case "/settings":
+        return "Settings";
+      default:
+        return "Dashboard";
+    }
+  };
+
+  const isOnDashboard = location.pathname === "/";
+
   return (
     <header className="flex items-center h-16 px-6 border-b bg-card">
-      <div className="flex-1">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <div className="flex items-center gap-4 flex-1">
+        {!isOnDashboard && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleDashboard}
+            className="flex items-center gap-2 text-primary hover:text-primary hover:bg-primary/10"
+          >
+            <Home className="h-4 w-4" />
+            Dashboard
+          </Button>
+        )}
+        <div className="flex items-center gap-2">
+          {!isOnDashboard && <span className="text-muted-foreground">•</span>}
+          <h1 className="text-2xl font-semibold">{getPageTitle()}</h1>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         <div className="relative">
@@ -79,6 +121,15 @@ const Header = () => {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {!isOnDashboard && (
+              <>
+                <DropdownMenuItem onClick={handleDashboard}>
+                  <Home className="mr-2 h-4 w-4" />
+                  <span>Dashboard</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onClick={handleSettings}>
               <SettingsIcon className="mr-2 h-4 w-4" />
               <span>Settings</span>

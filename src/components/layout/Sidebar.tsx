@@ -47,7 +47,12 @@ const Sidebar = () => {
   return (
     <aside className="hidden lg:flex flex-col w-64 bg-card border-r fixed h-full">
       <div className="flex items-center h-16 px-6 border-b">
-        <h1 className="text-xl font-bold text-primary">ClinicFlow</h1>
+        <NavLink 
+          to="/" 
+          className="text-xl font-bold text-primary hover:text-primary/80 transition-colors"
+        >
+          ClinicFlow
+        </NavLink>
       </div>
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => (
@@ -59,7 +64,7 @@ const Sidebar = () => {
                 "flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-md transition-colors",
                 isActive
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )
             }
           >
@@ -76,7 +81,7 @@ const Sidebar = () => {
                 "flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-md transition-colors w-full",
                 isActive
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )
             }
           >

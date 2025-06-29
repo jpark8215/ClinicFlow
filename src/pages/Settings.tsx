@@ -26,7 +26,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { User, Bell, Shield } from "lucide-react";
+import { User, Bell, Shield, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Schema for password change
 const passwordSchema = z.object({
@@ -57,6 +58,7 @@ const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Password form
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
@@ -209,11 +211,22 @@ const SettingsPage = () => {
 
   return (
     <div className="container mx-auto py-6 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account settings and preferences.
-        </p>
+      <div className="mb-6 flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your account settings and preferences.
+          </p>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
