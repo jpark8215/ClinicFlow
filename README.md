@@ -589,7 +589,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Database Administration Contact
 
 For database-related issues, administrative access, or technical support:
-- **Administrator UID**: `62b5c370-9078-48ac-ae92-0229f29a1875`
 - **Database Platform**: Supabase PostgreSQL
 - **Last Review**: January 2025
 - **Health Status**: Excellent (A+ Rating)
