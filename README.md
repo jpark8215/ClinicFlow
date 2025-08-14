@@ -7,20 +7,17 @@ Welcome to ClinicFlow, a comprehensive web application designed to streamline cl
 **Database Review Date**: July 2025  
 **Next Scheduled Review**: July 2025  
 
-### Database Health Status: Excellent (A+ Rating)
-- **Security**: Comprehensive RLS policies with admin oversight
+### Database Health Status: Excellent (A Rating)
+- **Security**: Comprehensive RLS policies with user-based access control
 - **Performance**: Optimized indexes and query performance
 - **Compliance**: HIPAA-ready with full audit capabilities
 - **Integrity**: Robust constraints and data validation
 
-### Administrative Functions
-```sql
--- Verify admin access across all tables
-SELECT * FROM check_admin_access();
-
--- Check current admin status
-SELECT * FROM get_current_admin_info();
-```
+### Access Control Model
+- **User-Based Access**: All authenticated users have equal privileges
+- **Data Isolation**: Users can manage their own records
+- **Shared Data Access**: Read access to patients, appointments, and shared resources
+- **Audit Trail**: Complete tracking of all user actions
 
 ## Recent Updates & Major Features
 
@@ -495,11 +492,11 @@ supabase/
 
 ### **Security Implementation**
 - **Authentication**: Secure email/password with session management
-- **Authorization**: Row Level Security with dual-tier access (Admin + User)
+- **Authorization**: Row Level Security with user-based access control
 - **Data Encryption**: End-to-end encryption for sensitive data
 - **Audit Logging**: Complete change tracking for compliance
 - **Input Validation**: Comprehensive validation on client and server
-- **Admin Oversight**: Dedicated administrator with full system access
+- **Equal Access**: All users have equal privileges with proper data isolation
 - **HIPAA Compliance**: Healthcare-grade security and audit capabilities
 
 ### **Compliance Readiness**
@@ -511,8 +508,7 @@ supabase/
 ### **Database Policies & Procedures**
 
 #### **Access Control Policies**
-- **Administrator Access**: Full CRUD permissions across all tables
-- **User Access**: Restricted to own data with read access to shared resources
+- **User Access**: All users can manage their own data with read access to shared resources
 - **Data Isolation**: Strict separation between user datasets
 - **Audit Requirements**: All data modifications logged with user attribution
 
@@ -530,8 +526,9 @@ supabase/
 
 #### **Security & Compliance Measures**
 - **Row Level Security**: Enabled on all tables with comprehensive policies
-- **Data Encryption**: At-rest and in-transit encryption for all sensitive data
+- **User-Based Access**: Equal privileges for all authenticated users
 - **Access Logging**: Complete audit trail for all database operations
+- **Data Encryption**: At-rest and in-transit encryption for all sensitive data
 - **HIPAA Compliance**: Healthcare-grade security and privacy controls
 - **Regular Security Reviews**: Quarterly security assessments and updates
 
@@ -588,14 +585,15 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Database Administration Contact
 
-For database-related issues, administrative access, or technical support:
+For database-related issues or technical support:
 - **Database Platform**: Supabase PostgreSQL
 - **Last Review**: January 2025
-- **Health Status**: Excellent (A+ Rating)
+- **Health Status**: Excellent (A Rating)
+- **Access Model**: User-based with equal privileges
 - **Compliance**: HIPAA-ready with comprehensive audit capabilities
 
 ### Emergency Database Procedures
-1. **Access Issues**: Use diagnostic functions to verify admin status
+1. **Access Issues**: Verify user authentication and RLS policies
 2. **Performance Problems**: Check query logs and index utilization
 3. **Security Concerns**: Review audit logs and access patterns
 4. **Data Recovery**: Contact Supabase support with project details
