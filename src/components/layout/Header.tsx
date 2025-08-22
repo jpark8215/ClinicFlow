@@ -56,9 +56,7 @@ const Header = () => {
 
   return (
     <header className="flex items-center h-14 sm:h-16 px-3 sm:px-6 border-b bg-card">
-      <div className="flex-1">
-        <h1 className="text-xl sm:text-2xl font-bold text-primary">ClinicFlow</h1>
-      </div>
+
       <div className="flex items-center gap-2 sm:gap-4">
         <NotificationPopover />
         
