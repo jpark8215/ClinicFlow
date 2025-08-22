@@ -586,59 +586,59 @@ const SmartSchedulePage = () => {
                   <CardHeader className="p-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-semibold text-sm">
+                        <h3 className="font-semibold text-xs sm:text-sm truncate">
                           {format(day.date, calendarView === "week" ? "EEE" : "d")}
                         </h3>
                         {calendarView === "week" && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground truncate">
                             {format(day.date, "MMM d")}
                           </p>
                         )}
                         {calendarView === "month" && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground truncate">
                             {format(day.date, "EEE")}
                           </p>
                         )}
                       </div>
-                      <div className="flex flex-col items-end gap-1">
+                      <div className="flex flex-col items-end gap-1 min-w-0">
                         <Badge 
-                          className={`text-xs ${getUtilizationColor(day.utilizationRate)}`}
+                          className={`text-xs ${getUtilizationColor(day.utilizationRate)} px-1 py-0.5`}
                           variant="outline"
                         >
-                          {Math.round(day.utilizationRate)}%
+                          <span className="text-xs">{Math.round(day.utilizationRate)}%</span>
                         </Badge>
                         {day.overbookAppointments > 0 && (
-                          <Badge className="bg-blue-100 text-blue-800 text-xs">
+                          <Badge className="bg-blue-100 text-blue-800 text-xs px-1 py-0.5">
                             +{day.overbookAppointments}
                           </Badge>
                         )}
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-3 pt-0">
+                  <CardContent className="p-2 sm:p-3 pt-0">
                     <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="grid grid-cols-2 gap-1 sm:gap-2 text-xs">
                         <div>
-                          <span className="text-muted-foreground">Total:</span>
-                          <span className="ml-1 font-medium">{day.totalAppointments}</span>
+                          <span className="text-muted-foreground text-xs">Total:</span>
+                          <span className="ml-1 font-medium text-xs">{day.totalAppointments}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Available:</span>
-                          <span className="ml-1 font-medium text-green-600">{day.availableSlots}</span>
+                          <span className="text-muted-foreground text-xs">Avail:</span>
+                          <span className="ml-1 font-medium text-green-600 text-xs">{day.availableSlots}</span>
                         </div>
                       </div>
                       
                       {day.appointments.slice(0, 3).map((appointment, idx) => (
-                        <div key={appointment.id} className="flex items-center gap-2 text-xs">
+                        <div key={appointment.id} className="flex items-center gap-1 text-xs min-w-0">
                           <div className="w-2 h-2 rounded-full bg-primary"></div>
-                          <span className="truncate">
+                          <span className="truncate text-xs">
                             {format(parseISO(appointment.appointment_time), "HH:mm")} - {appointment.patients?.full_name}
                           </span>
                         </div>
                       ))}
                       
                       {day.appointments.length > 3 && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground truncate">
                           +{day.appointments.length - 3} more
                         </p>
                       )}
@@ -658,20 +658,20 @@ const SmartSchedulePage = () => {
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
-                className="rounded-md border"
+                className="rounded-md border w-full sm:w-auto"
               />
             </div>
-            <div className="text-right">
-              <h2 className="text-lg font-semibold">
+            <div className="text-center sm:text-right">
+              <h2 className="text-base sm:text-lg font-semibold">
                 {format(selectedDate, "EEEE, MMMM d, yyyy")}
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {timeSlots.filter(slot => !slot.isAvailable).length} of {timeSlots.length} slots booked
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {timeSlots.map((slot) => (
               <Card
                 key={slot.time}
@@ -681,75 +681,77 @@ const SmartSchedulePage = () => {
                     : "bg-red-50 border-red-200"
                 }`}
               >
-                <CardHeader className="p-4">
+                <CardHeader className="p-2 sm:p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-semibold">{slot.displayTime}</span>
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                      <span className="font-semibold text-xs sm:text-sm">{slot.displayTime}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2">
                       {slot.isAvailable ? (
-                        <Badge className="bg-green-100 text-green-800 border-green-300">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Available
+                        <Badge className="bg-green-100 text-green-800 border-green-300 text-xs px-1 py-0.5 whitespace-nowrap">
+                          <CheckCircle className="h-3 w-3 mr-1 flex-shrink-0" />
+                          <span className="hidden sm:inline">Available</span>
+                          <span className="sm:hidden">Avail</span>
                         </Badge>
                       ) : (
-                        <Badge className="bg-red-100 text-red-800 border-red-300">
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Booked
+                        <Badge className="bg-red-100 text-red-800 border-red-300 text-xs px-1 py-0.5 whitespace-nowrap">
+                          <XCircle className="h-3 w-3 mr-1 flex-shrink-0" />
+                          <span className="hidden sm:inline">Booked</span>
+                          <span className="sm:hidden">Full</span>
                         </Badge>
                       )}
                       {slot.overbookCount > 0 && (
-                        <Badge className="bg-blue-100 text-blue-800 border-blue-300">
-                          <UserPlus className="h-3 w-3 mr-1" />
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-300 text-xs px-1 py-0.5 whitespace-nowrap">
+                          <UserPlus className="h-3 w-3 mr-1 flex-shrink-0" />
                           +{slot.overbookCount}
                         </Badge>
                       )}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
+                <CardContent className="p-2 sm:p-3 pt-0">
                   {slot.appointments.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       {slot.appointments.map((appointment) => (
                         <div
                           key={appointment.id}
-                          className="flex items-center gap-3 p-2 bg-white rounded border cursor-pointer hover:shadow-sm"
+                          className="flex items-center gap-2 p-1.5 sm:p-2 bg-white rounded border cursor-pointer hover:shadow-sm min-w-0"
                           onClick={() => {
                             setSelectedAppointment(appointment);
                             setIsDetailsOpen(true);
                           }}
                         >
-                          <Avatar className="h-8 w-8">
+                          <Avatar className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0">
                             <AvatarFallback className="text-xs">
                               {appointment.patients ? getInitials(appointment.patients.full_name) : "??"}
                             </AvatarFallback>
                           </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <p className="font-medium text-xs truncate">
                               {appointment.patients?.full_name || "Unknown Patient"}
                             </p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{appointment.appointment_type}</span>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground overflow-hidden">
+                              <span className="truncate">{appointment.appointment_type}</span>
                               {appointment.appointments_providers?.[0]?.providers?.full_name && (
                                 <>
-                                  <span>•</span>
-                                  <span>{appointment.appointments_providers[0].providers.full_name}</span>
+                                  <span className="hidden sm:inline">•</span>
+                                  <span className="truncate hidden sm:inline text-xs">{appointment.appointments_providers[0].providers.full_name}</span>
                                 </>
                               )}
                             </div>
                           </div>
-                          <Badge className={`text-xs ${getStatusColor(appointment.status)}`}>
+                          <Badge className={`text-xs ${getStatusColor(appointment.status)} px-1 py-0.5 flex-shrink-0 whitespace-nowrap`}>
                             {appointment.status}
                           </Badge>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-4">
-                      <CheckCircle className="h-8 w-8 mx-auto text-green-600 mb-2" />
-                      <p className="text-sm text-green-700 font-medium">Available Slot</p>
-                      <p className="text-xs text-green-600 mt-1">Click to book appointment</p>
+                    <div className="text-center py-3 sm:py-4">
+                      <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 mx-auto text-green-600 mb-2" />
+                      <p className="text-xs sm:text-sm text-green-700 font-medium">Available Slot</p>
+                      <p className="text-xs text-green-600 mt-1">Click to book</p>
                     </div>
                   )}
                 </CardContent>
@@ -765,11 +767,11 @@ const SmartSchedulePage = () => {
               {/* Key Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                 <Card>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="flex items-center gap-2">
                       <CalendarIcon className="h-4 w-4 text-blue-600" />
                       <div>
-                        <p className="text-2xl font-bold">{analyticsData.totalAppointments}</p>
+                        <p className="text-lg sm:text-2xl font-bold">{analyticsData.totalAppointments}</p>
                         <p className="text-xs text-muted-foreground">Total</p>
                       </div>
                     </div>
@@ -777,11 +779,11 @@ const SmartSchedulePage = () => {
                 </Card>
                 
                 <Card>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-600" />
                       <div>
-                        <p className="text-2xl font-bold">{analyticsData.confirmedAppointments}</p>
+                        <p className="text-lg sm:text-2xl font-bold">{analyticsData.confirmedAppointments}</p>
                         <p className="text-xs text-muted-foreground">Confirmed</p>
                       </div>
                     </div>
@@ -789,11 +791,11 @@ const SmartSchedulePage = () => {
                 </Card>
                 
                 <Card>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-yellow-600" />
                       <div>
-                        <p className="text-2xl font-bold">{analyticsData.pendingAppointments}</p>
+                        <p className="text-lg sm:text-2xl font-bold">{analyticsData.pendingAppointments}</p>
                         <p className="text-xs text-muted-foreground">Pending</p>
                       </div>
                     </div>
@@ -801,11 +803,11 @@ const SmartSchedulePage = () => {
                 </Card>
                 
                 <Card>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="flex items-center gap-2">
                       <Activity className="h-4 w-4 text-blue-600" />
                       <div>
-                        <p className="text-2xl font-bold">{analyticsData.completedAppointments}</p>
+                        <p className="text-lg sm:text-2xl font-bold">{analyticsData.completedAppointments}</p>
                         <p className="text-xs text-muted-foreground">Completed</p>
                       </div>
                     </div>
@@ -813,11 +815,11 @@ const SmartSchedulePage = () => {
                 </Card>
                 
                 <Card>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="flex items-center gap-2">
                       <UserPlus className="h-4 w-4 text-blue-600" />
                       <div>
-                        <p className="text-2xl font-bold">{analyticsData.overbookAppointments}</p>
+                        <p className="text-lg sm:text-2xl font-bold">{analyticsData.overbookAppointments}</p>
                         <p className="text-xs text-muted-foreground">Overbook</p>
                       </div>
                     </div>
@@ -825,11 +827,11 @@ const SmartSchedulePage = () => {
                 </Card>
                 
                 <Card>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-red-600" />
                       <div>
-                        <p className="text-2xl font-bold">{analyticsData.highRiskAppointments}</p>
+                        <p className="text-lg sm:text-2xl font-bold">{analyticsData.highRiskAppointments}</p>
                         <p className="text-xs text-muted-foreground">High Risk</p>
                       </div>
                     </div>
@@ -841,17 +843,17 @@ const SmartSchedulePage = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                       <Target className="h-5 w-5" />
                       Utilization Rate
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-primary mb-2">
+                      <div className="text-2xl sm:text-4xl font-bold text-primary mb-2">
                         {Math.round(analyticsData.averageUtilization)}%
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Average schedule utilization
                       </p>
                       <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
@@ -866,17 +868,17 @@ const SmartSchedulePage = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                       <TrendingUp className="h-5 w-5" />
                       Confirmation Rate
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-green-600 mb-2">
+                      <div className="text-2xl sm:text-4xl font-bold text-green-600 mb-2">
                         {Math.round(analyticsData.confirmationRate)}%
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Appointments confirmed
                       </p>
                       <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
@@ -891,17 +893,17 @@ const SmartSchedulePage = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                       <AlertTriangle className="h-5 w-5" />
                       No-Show Rate
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-red-600 mb-2">
+                      <div className="text-2xl sm:text-4xl font-bold text-red-600 mb-2">
                         {Math.round(analyticsData.noShowRate)}%
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Missed appointments
                       </p>
                       <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
@@ -918,20 +920,20 @@ const SmartSchedulePage = () => {
               {/* AI Insights */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <Brain className="h-5 w-5" />
                     AI-Powered Insights
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">
                     Smart recommendations to optimize your schedule
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <div className="space-y-4">
                     {analyticsData.averageUtilization < 60 && (
                       <Alert>
                         <Zap className="h-4 w-4" />
-                        <AlertDescription>
+                        <AlertDescription className="text-xs sm:text-sm">
                           <strong>Optimization Opportunity:</strong> Your average utilization is {Math.round(analyticsData.averageUtilization)}%. 
                           Consider consolidating appointments or reducing available time slots to improve efficiency.
                         </AlertDescription>
@@ -941,7 +943,7 @@ const SmartSchedulePage = () => {
                     {analyticsData.noShowRate > 15 && (
                       <Alert>
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
+                        <AlertDescription className="text-xs sm:text-sm">
                           <strong>High No-Show Rate:</strong> {Math.round(analyticsData.noShowRate)}% of appointments result in no-shows. 
                           Consider implementing reminder systems or overbook strategies.
                         </AlertDescription>
@@ -951,7 +953,7 @@ const SmartSchedulePage = () => {
                     {analyticsData.overbookAppointments > 0 && (
                       <Alert>
                         <UserPlus className="h-4 w-4" />
-                        <AlertDescription>
+                        <AlertDescription className="text-xs sm:text-sm">
                           <strong>Overbook Strategy Active:</strong> You have {analyticsData.overbookAppointments} overbook appointments 
                           to compensate for potential no-shows. Monitor actual attendance to optimize this strategy.
                         </AlertDescription>
@@ -961,7 +963,7 @@ const SmartSchedulePage = () => {
                     {analyticsData.highRiskAppointments > 0 && (
                       <Alert>
                         <Bell className="h-4 w-4" />
-                        <AlertDescription>
+                        <AlertDescription className="text-xs sm:text-sm">
                           <strong>High-Risk Appointments:</strong> {analyticsData.highRiskAppointments} appointments have high no-show risk. 
                           Consider sending priority reminders or creating backup overbook slots.
                         </AlertDescription>
