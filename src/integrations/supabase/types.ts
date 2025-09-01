@@ -647,6 +647,189 @@ export type Database = {
           },
         ]
       }
+      analytics_metrics: {
+        Row: {
+          id: string
+          metric_name: string
+          metric_value: number | null
+          dimensions: Json
+          timestamp: string
+          clinic_id: string | null
+          user_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          metric_name: string
+          metric_value?: number | null
+          dimensions?: Json
+          timestamp?: string
+          clinic_id?: string | null
+          user_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          metric_name?: string
+          metric_value?: number | null
+          dimensions?: Json
+          timestamp?: string
+          clinic_id?: string | null
+          user_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      dashboard_configs: {
+        Row: {
+          id: string
+          user_id: string
+          dashboard_name: string
+          layout_config: Json
+          widget_configs: Json
+          is_default: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          dashboard_name: string
+          layout_config: Json
+          widget_configs?: Json
+          is_default?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          dashboard_name?: string
+          layout_config?: Json
+          widget_configs?: Json
+          is_default?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_configs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      report_templates: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          template_config: Json
+          is_public: boolean | null
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          template_config: Json
+          is_public?: boolean | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          template_config?: Json
+          is_public?: boolean | null
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      scheduled_reports: {
+        Row: {
+          id: string
+          template_id: string
+          name: string
+          schedule_config: Json
+          recipients: Json
+          is_active: boolean | null
+          last_run_at: string | null
+          next_run_at: string | null
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          template_id: string
+          name: string
+          schedule_config: Json
+          recipients?: Json
+          is_active?: boolean | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          template_id?: string
+          name?: string
+          schedule_config?: Json
+          recipients?: Json
+          is_active?: boolean | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_reports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
@@ -704,6 +887,60 @@ export type Database = {
       }
     }
     Functions: {
+      compute_patient_flow_metrics: {
+        Args: {
+          start_date?: string
+          end_date?: string
+          clinic_filter?: string
+        }
+        Returns: {
+          total_appointments: number
+          completed_appointments: number
+          no_shows: number
+          cancellations: number
+          pending_appointments: number
+          average_duration: number
+          completion_rate: number
+          no_show_rate: number
+        }[]
+      }
+      compute_utilization_metrics: {
+        Args: {
+          start_date?: string
+          end_date?: string
+          clinic_filter?: string
+        }
+        Returns: {
+          total_slots: number
+          booked_slots: number
+          available_slots: number
+          utilization_rate: number
+          peak_hours: Json
+        }[]
+      }
+      compute_revenue_metrics: {
+        Args: {
+          start_date?: string
+          end_date?: string
+          clinic_filter?: string
+        }
+        Returns: {
+          total_appointments: number
+          estimated_revenue: number
+          average_per_appointment: number
+          revenue_trend: Json
+        }[]
+      }
+      store_analytics_metric: {
+        Args: {
+          p_metric_name: string
+          p_metric_value: number
+          p_dimensions?: Json
+          p_clinic_id?: string
+          p_user_id?: string
+        }
+        Returns: string
+      }
       insert_dummy_data: {
         Args: Record<PropertyKey, never>
         Returns: string
