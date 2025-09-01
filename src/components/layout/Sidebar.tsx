@@ -10,6 +10,7 @@ import {
   Users,
   Shield,
   FileCheck,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ const navItems = [
   { href: "/insurance-eligibility", label: "Insurance Eligibility", icon: Shield },
   { href: "/intake", label: "Intake Automation", icon: UserPlus },
   { href: "/patients", label: "Patient List", icon: Users },
+  { href: "/documents", label: "Documents", icon: FileCheck },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 const Sidebar = () => {
