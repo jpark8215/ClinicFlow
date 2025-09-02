@@ -647,7 +647,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             <div className="text-xs text-muted-foreground">
               <div className="flex items-center gap-4 flex-wrap">
                 <span>Shortcuts: Ctrl+B (bold), Ctrl+I (italic), Ctrl+U (underline), Ctrl+Z (undo), Ctrl+Y (redo)</span>
-                <span>Merge fields: Use toolbar or type {{`field.name`}}</span>
+                <span>Merge fields: Use toolbar or type {`{{field.name}}`}</span>
               </div>
             </div>
           </div>

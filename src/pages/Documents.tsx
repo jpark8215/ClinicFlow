@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   FileText, 
-  Template, 
+  File as Template, 
   History, 
   Settings, 
   Plus,

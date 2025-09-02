@@ -265,7 +265,7 @@ export const TrendAnalysis: React.FC<TrendAnalysisProps> = ({
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
-            {chartType === 'line' && (
+            {chartType === 'line' ? (
               <LineChart data={displayData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -318,9 +318,7 @@ export const TrendAnalysis: React.FC<TrendAnalysisProps> = ({
                   />
                 )}
               </LineChart>
-            )}
-            
-            {chartType === 'area' && (
+            ) : chartType === 'area' ? (
               <AreaChart data={displayData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -370,9 +368,7 @@ export const TrendAnalysis: React.FC<TrendAnalysisProps> = ({
                   />
                 )}
               </AreaChart>
-            )}
-            
-            {chartType === 'bar' && (
+            ) : chartType === 'bar' ? (
               <BarChart data={displayData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -398,9 +394,7 @@ export const TrendAnalysis: React.FC<TrendAnalysisProps> = ({
                   <Bar dataKey="noShows" fill="#ef4444" name="No-Shows" />
                 )}
               </BarChart>
-            )}
-            
-            {chartType === 'composed' && (
+            ) : (
               <ComposedChart data={displayData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 

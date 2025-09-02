@@ -237,7 +237,7 @@ export const CustomReports: React.FC<CustomReportsProps> = ({ clinicId }) => {
     if (metric) {
       addMetricToReport(metric);
     }
-  }, [addMetricToReport]);
+  }, []);
 
   const addMetricToReport = useCallback((metric: MetricDefinition) => {
     const newSection: ReportSection = {
@@ -248,7 +248,7 @@ export const CustomReports: React.FC<CustomReportsProps> = ({ clinicId }) => {
       order: newTemplate.config.sections.length
     };
 
-    setNewTemplate((prev: { config: { sections: any; }; }) => ({
+    setNewTemplate(prev => ({
       ...prev,
       config: {
         ...prev.config,
@@ -258,21 +258,21 @@ export const CustomReports: React.FC<CustomReportsProps> = ({ clinicId }) => {
   }, [newTemplate.config.sections.length]);
 
   const removeSection = (sectionId: string) => {
-    setNewTemplate((prev: { config: { sections: any[]; }; }) => ({
+    setNewTemplate(prev => ({
       ...prev,
       config: {
         ...prev.config,
-        sections: prev.config.sections.filter((s: { id: string; }) => s.id !== sectionId)
+        sections: prev.config.sections.filter(s => s.id !== sectionId)
       }
     }));
   };
 
   const updateSection = (sectionId: string, updates: Partial<ReportSection>) => {
-    setNewTemplate((prev: { config: { sections: any[]; }; }) => ({
+    setNewTemplate(prev => ({
       ...prev,
       config: {
         ...prev.config,
-        sections: prev.config.sections.map((s: { id: string; }) =>
+        sections: prev.config.sections.map(s =>
           s.id === sectionId ? { ...s, ...updates } : s
         )
       }
@@ -481,13 +481,13 @@ export const CustomReports: React.FC<CustomReportsProps> = ({ clinicId }) => {
 
         <TabsContent value="templates" className="space-y-6">
           <div className="flex items-center justify-end">
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Report
-            </Button>
-          </DialogTrigger>
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Report
+                </Button>
+              </DialogTrigger>
           <DialogContent className="sm:max-w-[1200px] max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Create Custom Report Template</DialogTitle>
@@ -842,13 +842,13 @@ export const CustomReports: React.FC<CustomReportsProps> = ({ clinicId }) => {
                 Create Template
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogContent>
+          </Dialog>
+          </div>
 
       {/* Report Templates Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {sampleTemplates.map((template: { id: string; name: any; isPublic: any; description: any; templateConfig: { format: any; }; createdAt: { toLocaleDateString: () => any; }; }) => (
+        {sampleTemplates.map((template) => (
           <Card key={template.id}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
@@ -966,8 +966,6 @@ export const CustomReports: React.FC<CustomReportsProps> = ({ clinicId }) => {
             </div>
           </div>
 
-        </CardContent>
-      </Card>
         </CardContent>
       </Card>
         </TabsContent>

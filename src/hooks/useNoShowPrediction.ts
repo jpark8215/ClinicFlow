@@ -20,7 +20,7 @@ export const useNoShowPrediction = (appointmentId?: string) => {
     queryFn: () => appointmentId ? mlIntegrationService.getAppointmentRiskPrediction(appointmentId) : null,
     enabled: !!appointmentId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 
   // Update prediction outcome
@@ -97,7 +97,7 @@ export const useHighRiskAppointments = (date: Date, riskThreshold: number = 0.7)
     queryKey: ['highRiskAppointments', date.toDateString(), riskThreshold],
     queryFn: () => mlIntegrationService.getHighRiskAppointments(date, riskThreshold),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   return {
