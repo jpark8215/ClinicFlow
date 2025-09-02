@@ -1,6 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { OCRResult, ExtractedField, BoundingBox } from '@/types/aiml';
 
+// Export ExtractedField for use in other modules
+export type { ExtractedField } from '@/types/aiml';
+
 /**
  * Data Extraction Service for intelligent field extraction from OCR results
  * Uses NLP patterns, regex, and business rules to extract structured data

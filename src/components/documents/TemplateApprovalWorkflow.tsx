@@ -148,7 +148,7 @@ export const TemplateApprovalWorkflow: React.FC<TemplateApprovalWorkflowProps> =
     try {
       await documentService.updateTemplateApproval(
         selectedApproval.id,
-        approvalAction,
+        approvalAction === 'approve' ? 'approved' : 'rejected',
         data.comments
       );
 

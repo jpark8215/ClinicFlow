@@ -114,12 +114,12 @@ export const DocumentStorageManager: React.FC<DocumentStorageManagerProps> = ({
     try {
       const downloadUrl = await documentStorageService.downloadDocument(document.id);
       
-      const link = document.createElement('a');
+      const link = window.document.createElement('a');
       link.href = downloadUrl;
       link.download = document.originalFilename;
-      document.body.appendChild(link);
+      window.document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      window.document.body.removeChild(link);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to download document');
     }

@@ -10,7 +10,7 @@ export { batchDocumentService } from '@/services/batchDocumentService';
 // Types
 export type {
   BatchDocumentJob,
-  BatchDocumentRequest,
+  DocumentRequest,
   BatchJobProgress,
   BatchJobSettings,
   BatchJobResult,
