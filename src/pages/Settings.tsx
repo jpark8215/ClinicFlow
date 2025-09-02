@@ -111,23 +111,9 @@ const SettingsPage = () => {
     enabled: !!user?.id,
   });
 
-  // Fetch user preferences
-  const { data: userPreferences, isLoading: preferencesLoading } = useQuery<Tables<"user_preferences">>({
-    queryKey: ["userPreferences", user?.id],
-    queryFn: async () => {
-      if (!user?.id) throw new Error("User not authenticated");
-      
-      const { data, error } = await supabase
-        .from("user_preferences")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-      
-      if (error && error.code !== "PGRST116") throw error; // PGRST116 is "no rows returned"
-      return data;
-    },
-    enabled: !!user?.id,
-  });
+  // Fetch user preferences - temporarily disabled until migration
+  const userPreferences = null;
+  const preferencesLoading = false;
 
   // Update profile form when user data is loaded
   useEffect(() => {
@@ -236,30 +222,12 @@ const SettingsPage = () => {
   const handleNotificationUpdate = async (values: z.infer<typeof notificationSchema>) => {
     setLoading(true);
     try {
-      // Update user preferences in the database
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: user?.id,
-          email_notifications: values.emailNotifications,
-          appointment_reminders: values.appointmentReminders,
-          preauth_updates: values.preauthUpdates,
-          system_alerts: values.systemAlerts,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        toast({
-          title: "Error updating preferences",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Notification preferences updated",
-          description: "Your notification settings have been saved.",
-        });
-      }
+      // Temporarily disabled until user_preferences table migration is applied
+      toast({
+        title: "Feature temporarily unavailable",
+        description: "Notification preferences will be available after database migration.",
+        variant: "default",
+      });
     } catch (error) {
       toast({
         title: "Error",

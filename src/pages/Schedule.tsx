@@ -99,7 +99,7 @@ import {
   endOfMonth,
   eachWeekOfInterval,
 } from "date-fns";
-import AddAppointmentDialog from "@/components/appointments/AddAppointmentDialog";
+// import AddAppointmentDialog from "@/components/appointments/AddAppointmentDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type AppointmentWithDetails = Tables<"appointments"> & {
@@ -422,7 +422,7 @@ const SmartSchedulePage = () => {
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          <AddAppointmentDialog onSuccess={() => refetch()} />
+          {/* <AddAppointmentDialog onSuccess={() => refetch()} /> */}
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <Download className="h-4 w-4" />
             Export

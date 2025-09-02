@@ -63,7 +63,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, isToday, parseISO } from "date-fns";
-import AddAppointmentDialog from "@/components/appointments/AddAppointmentDialog";
+// import AddAppointmentDialog from "@/components/appointments/AddAppointmentDialog";
 
 type AppointmentWithDetails = Tables<"appointments"> & {
   patients: Pick<Tables<"patients">, "full_name" | "phone" | "email" | "address"> | null;
@@ -305,7 +305,7 @@ const TodaysAppointmentsPage = () => {
           </div>
         </div>
         <div className="w-full sm:w-auto">
-          <AddAppointmentDialog onSuccess={() => refetch()} />
+          {/* <AddAppointmentDialog onSuccess={() => refetch()} /> */}
         </div>
       </div>
 

@@ -54,7 +54,7 @@ export interface BatchJobResult {
   totalDocuments: number;
   successfulDocuments: number;
   failedDocuments: number;
-  generatedDocuments: GeneratedDocument[];
+  generatedDocuments: any[]; // Temporarily disabled until migration
   failedRequests: FailedDocumentRequest[];
   processingTime: number;
   outputFiles: string[];
