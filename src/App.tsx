@@ -14,6 +14,8 @@ import PriorAuthorization from "./pages/PriorAuthorization";
 import InsuranceEligibility from "./pages/InsuranceEligibility";
 import Intake from "./pages/Intake";
 import Settings from "./pages/Settings";
+import Analytics from "./pages/Analytics";
+import Documents from "./pages/Documents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +90,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/documents"
+              element={
+                <ProtectedRoute>
+                  <Documents />
                 </ProtectedRoute>
               }
             />
