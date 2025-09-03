@@ -1,10 +1,14 @@
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import { Skeleton } from "../ui/skeleton";
 
-const ProtectedRoute = () => {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { session, loading } = useAuth();
   const location = useLocation();
 
@@ -25,7 +29,7 @@ const ProtectedRoute = () => {
 
   return (
     <DashboardLayout>
-      <Outlet />
+      {children}
     </DashboardLayout>
   );
 };
