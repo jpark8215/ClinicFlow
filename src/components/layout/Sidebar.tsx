@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   Bell,
   Calendar,
@@ -16,6 +16,19 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useToast } from "../ui/use-toast";
 import { useAuth } from "../auth/AuthProvider";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Gauge },
@@ -28,10 +41,12 @@ const navItems = [
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-const Sidebar = () => {
+const AppSidebar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signOut } = useAuth();
+  const location = useLocation();
+  const { state } = useSidebar();
 
   const handleLogout = async () => {
     const { error } = await signOut();
@@ -50,61 +65,80 @@ const Sidebar = () => {
     }
   };
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <aside className="hidden lg:flex flex-col w-64 bg-card border-r fixed h-full">
-      <div className="flex items-center h-16 px-6 border-b">
-        <NavLink 
-          to="/" 
-          className="text-xl font-bold text-primary hover:text-primary/80 transition-colors"
-        >
-          ClinicFlow
-        </NavLink>
-      </div>
-      <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.label}
-            to={item.href}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-md transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )
-            }
-          >
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-      <div className="p-4 border-t space-y-2">
-          <NavLink
-            to="/settings"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-md transition-colors w-full",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )
-            }
-          >
-            <Settings className="h-4 w-4" />
-            Settings
-          </NavLink>
-           <Button 
-             variant="ghost" 
-             className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10" 
-             onClick={handleLogout}
-           >
-              <LogOut className="h-4 w-4" />
-              Log Out
-          </Button>
-      </div>
-    </aside>
+    <Sidebar variant="inset" collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <NavLink to="/" className="flex items-center gap-2">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Gauge className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">ClinicFlow</span>
+                  <span className="truncate text-xs">Healthcare Management</span>
+                </div>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.label}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.href)}
+                    tooltip={item.label}
+                  >
+                    <NavLink to={item.href}>
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              asChild 
+              isActive={isActive("/settings")}
+              tooltip="Settings"
+            >
+              <NavLink to="/settings">
+                <Settings />
+                <span>Settings</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              onClick={handleLogout}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              tooltip="Log Out"
+            >
+              <LogOut />
+              <span>Log Out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 
-export default Sidebar;
+export default AppSidebar;

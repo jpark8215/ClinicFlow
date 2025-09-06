@@ -1,6 +1,7 @@
 import { Bell, LogOut, Settings as SettingsIcon, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,9 +57,12 @@ const Header = () => {
 
   return (
     <header className="flex items-center h-14 sm:h-16 px-3 sm:px-6 border-b bg-card">
-      <div className="flex-1">
-        <h1 className="text-xl sm:text-2xl font-bold text-primary">            
-        </h1>
+      <div className="flex items-center gap-4">
+        <SidebarTrigger className="lg:hidden" />
+        <div className="flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-primary">            
+          </h1>
+        </div>
       </div>
       <div className="flex items-center gap-2 sm:gap-4">
         <NotificationPopover />
