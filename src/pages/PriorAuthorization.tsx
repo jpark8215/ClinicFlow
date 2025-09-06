@@ -86,12 +86,25 @@ const PriorAuthorizationPage = () => {
   const [selectedAuth, setSelectedAuth] = useState<Tables<"pre_authorizations"> | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingAuth, setEditingAuth] = useState<Tables<"pre_authorizations"> | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const form = useForm<PreauthFormData>({
+    resolver: zodResolver(preauthSchema),
+    defaultValues: {
+      patientName: "",
+      service: "",
+      payer: "",
+      requestedAmount: "",
+      notes: "",
+    },
+  });
+
+  const editForm = useForm<PreauthFormData>({
     resolver: zodResolver(preauthSchema),
     defaultValues: {
       patientName: "",
@@ -255,6 +268,57 @@ const PriorAuthorizationPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onEditSubmit = async (data: PreauthFormData) => {
+    if (!editingAuth) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("pre_authorizations")
+        .update({
+          patient_name: data.patientName,
+          service: data.service,
+          payer: data.payer,
+          requested_amount: data.requestedAmount ? parseFloat(data.requestedAmount) : null,
+          notes: data.notes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", editingAuth.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Authorization Updated",
+        description: "The authorization has been successfully updated.",
+      });
+
+      editForm.reset();
+      setIsEditOpen(false);
+      setEditingAuth(null);
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error Updating Authorization",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditAuth = (auth: Tables<"pre_authorizations">) => {
+    setEditingAuth(auth);
+    editForm.reset({
+      patientName: auth.patient_name || "",
+      service: auth.service || "",
+      payer: auth.payer || "",
+      requestedAmount: auth.requested_amount?.toString() || "",
+      notes: auth.notes || "",
+    });
+    setIsEditOpen(true);
   };
 
   if (error) {
@@ -637,7 +701,10 @@ const PriorAuthorizationPage = () => {
                           Mark Denied
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditAuth(auth);
+                        }}>
                           <Edit className="h-4 w-4 mr-2" />
                           Edit Authorization
                         </DropdownMenuItem>
@@ -788,13 +855,150 @@ const PriorAuthorizationPage = () => {
                   <XCircle className="h-4 w-4 mr-2" />
                   Mark Denied
                 </Button>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full sm:w-auto"
+                  onClick={() => handleEditAuth(selectedAuth)}
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Authorization Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl">Edit Prior Authorization</DialogTitle>
+            <DialogDescription className="text-sm">
+              Update the authorization request details.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="patientName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Patient Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter patient name" {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="payer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Insurance Payer *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Select payer" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Blue Cross Blue Shield">Blue Cross Blue Shield</SelectItem>
+                          <SelectItem value="Aetna">Aetna</SelectItem>
+                          <SelectItem value="United Healthcare">United Healthcare</SelectItem>
+                          <SelectItem value="Cigna">Cigna</SelectItem>
+                          <SelectItem value="Medicare">Medicare</SelectItem>
+                          <SelectItem value="Medicaid">Medicaid</SelectItem>
+                          <SelectItem value="Humana">Humana</SelectItem>
+                          <SelectItem value="Kaiser Permanente">Kaiser Permanente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={editForm.control}
+                name="service"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Service/Procedure *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter service or procedure" {...field} className="text-sm" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="requestedAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Requested Amount</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="0.00" 
+                        {...field} 
+                        className="text-sm" 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Add any additional notes or medical justification..."
+                        className="resize-none text-sm"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditOpen(false);
+                    setEditingAuth(null);
+                    editForm.reset();
+                  }}
+                  disabled={loading}
+                  className="w-full sm:w-auto"
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading} className="w-full sm:w-auto" size="sm">
+                  {loading ? "Updating..." : "Update Authorization"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
