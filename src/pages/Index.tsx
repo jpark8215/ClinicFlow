@@ -1,7 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Users, FileText, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-6">
       <div>
@@ -95,19 +98,31 @@ const Index = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <button className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors">
+              <button 
+                onClick={() => navigate('/patients')}
+                className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
                 <Users className="h-6 w-6 mb-2" />
                 <span className="text-sm">Add Patient</span>
               </button>
-              <button className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors">
+              <button 
+                onClick={() => navigate('/schedule')}
+                className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
                 <Calendar className="h-6 w-6 mb-2" />
                 <span className="text-sm">Schedule Appointment</span>
               </button>
-              <button className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors">
+              <button 
+                onClick={() => navigate('/intake')}
+                className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
                 <FileText className="h-6 w-6 mb-2" />
                 <span className="text-sm">Process Intake</span>
               </button>
-              <button className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors">
+              <button 
+                onClick={() => navigate('/prior-authorization')}
+                className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
                 <AlertTriangle className="h-6 w-6 mb-2" />
                 <span className="text-sm">Prior Auth</span>
               </button>
