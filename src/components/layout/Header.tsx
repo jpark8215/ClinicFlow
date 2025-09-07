@@ -60,7 +60,7 @@ const Header = () => {
       <div className="flex items-center gap-4 flex-1">
         <SidebarTrigger className="lg:hidden" />
         <div className="flex-1">
-          <h1 className="text-xl sm:text-2xl font-bold text-primary">ClinicFlow</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-primary"></h1>
         </div>
       </div>
       
@@ -113,5 +113,6 @@ const Header = () => {
     </header>
   );
 };
+
 
 export default Header;
