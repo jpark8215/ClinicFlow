@@ -50,6 +50,10 @@ const Header = () => {
     navigate("/");
   };
 
+  const handleSettings = () => {
+    navigate("/settings");
+  };
+
   const isOnDashboard = location.pathname === "/";
 
   return (
@@ -92,6 +96,11 @@ const Header = () => {
                 <DropdownMenuSeparator />
               </>
             )}
+            <DropdownMenuItem onClick={handleSettings}>
+              <SettingsIcon className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
