@@ -89,8 +89,8 @@ const AppSidebar = () => {
 
       <SidebarContent className="px-2 py-2 bg-background">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground font-semibold mb-2">Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
+{/*           <SidebarGroupLabel className="text-muted-foreground font-semibold mb-2">Navigation</SidebarGroupLabel> */}
+          <SidebarGroupContent> 
             <SidebarMenu className="space-y-1">
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -129,5 +129,6 @@ const AppSidebar = () => {
     </Sidebar>
   );
 };
+
 
 export default AppSidebar;
