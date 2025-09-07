@@ -68,8 +68,8 @@ const AppSidebar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
-      <SidebarHeader>
+    <Sidebar variant="inset" collapsible="icon" className="border-r border-border bg-card">
+      <SidebarHeader className="border-b border-border">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
@@ -78,8 +78,8 @@ const AppSidebar = () => {
                   <Gauge className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">ClinicFlow</span>
-                  <span className="truncate text-xs">Healthcare Management</span>
+                  <span className="truncate font-semibold text-foreground">ClinicFlow</span>
+                  <span className="truncate text-xs text-muted-foreground">Healthcare Management</span>
                 </div>
               </NavLink>
             </SidebarMenuButton>
@@ -87,20 +87,25 @@ const AppSidebar = () => {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-2 py-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground font-semibold mb-2">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton 
                     asChild 
                     isActive={isActive(item.href)}
                     tooltip={item.label}
+                    className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
                   >
-                    <NavLink to={item.href}>
-                      <item.icon />
+                    <NavLink to={item.href} className={({ isActive }) => 
+                      `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                        isActive ? 'bg-primary text-primary-foreground' : ''
+                      }`
+                    }>
+                      <item.icon className="size-4" />
                       <span>{item.label}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -111,27 +116,15 @@ const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-border mt-auto">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton 
-              asChild 
-              isActive={isActive("/settings")}
-              tooltip="Settings"
-            >
-              <NavLink to="/settings">
-                <Settings />
-                <span>Settings</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton 
               onClick={handleLogout}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
               tooltip="Log Out"
             >
-              <LogOut />
+              <LogOut className="size-4" />
               <span>Log Out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
