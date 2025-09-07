@@ -45,9 +45,6 @@ const Header = () => {
     }
   };
 
-  const handleSettings = () => {
-    navigate("/settings");
-  };
 
   const handleDashboard = () => {
     navigate("/");
@@ -60,16 +57,13 @@ const Header = () => {
       <div className="flex items-center gap-4 flex-1">
         <SidebarTrigger className="lg:hidden" />
         <div className="flex-1">
-          <h1 className="text-xl sm:text-2xl font-bold text-primary">ClinicFlow</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-primary">ClinicFlow</h1>
         </div>
       </div>
       
       <div className="flex items-center gap-2 sm:gap-4">
         <NotificationPopover />
         
-        <Button variant="ghost" size="icon" onClick={handleSettings} className="h-8 w-8">
-          <SettingsIcon className="h-4 w-4" />
-        </Button>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -98,11 +92,6 @@ const Header = () => {
                 <DropdownMenuSeparator />
               </>
             )}
-            <DropdownMenuItem onClick={handleSettings}>
-              <SettingsIcon className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
