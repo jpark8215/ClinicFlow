@@ -69,23 +69,25 @@ const AppSidebar = () => {
 
   return (
     <Sidebar variant="inset" collapsible="icon" className="border-r border-border bg-background">
-      <SidebarHeader className="border-b border-border bg-background">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <NavLink to="/" className="flex items-center gap-2">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Gauge className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold text-foreground">ClinicFlow</span>
-                  <span className="truncate text-xs text-muted-foreground">Healthcare Management</span>
-                </div>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+      {state === "expanded" && (
+        <SidebarHeader className="border-b border-border bg-background">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
+                <NavLink to="/" className="flex items-center gap-2">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <Gauge className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold text-foreground">ClinicFlow</span>
+                    <span className="truncate text-xs text-muted-foreground">Healthcare Management</span>
+                  </div>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+      )}
 
       <SidebarContent className="px-2 py-2 bg-background">
         <SidebarGroup>
