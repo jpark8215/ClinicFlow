@@ -91,12 +91,26 @@ const PatientsPage = () => {
   const [selectedPatient, setSelectedPatient] = useState<PatientWithCounts | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const form = useForm<PatientFormData>({
+    resolver: zodResolver(patientSchema),
+    defaultValues: {
+      full_name: "",
+      date_of_birth: "",
+      phone: "",
+      email: "",
+      address: "",
+      emergency_contact_name: "",
+      emergency_contact_phone: "",
+    },
+  });
+
+  const editForm = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
     defaultValues: {
       full_name: "",
@@ -214,6 +228,94 @@ const PatientsPage = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditPatient = (patient: PatientWithCounts) => {
+    setSelectedPatient(patient);
+    editForm.reset({
+      full_name: patient.full_name,
+      date_of_birth: patient.date_of_birth || "",
+      phone: patient.phone || "",
+      email: patient.email || "",
+      address: patient.address || "",
+      emergency_contact_name: patient.emergency_contact_name || "",
+      emergency_contact_phone: patient.emergency_contact_phone || "",
+    });
+    setIsEditOpen(true);
+  };
+
+  const onEditSubmit = async (data: PatientFormData) => {
+    if (!selectedPatient) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("patients")
+        .update({
+          full_name: data.full_name,
+          date_of_birth: data.date_of_birth || null,
+          phone: data.phone || null,
+          email: data.email || null,
+          address: data.address || null,
+          emergency_contact_name: data.emergency_contact_name || null,
+          emergency_contact_phone: data.emergency_contact_phone || null,
+        })
+        .eq("id", selectedPatient.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Patient Updated",
+        description: "The patient information has been successfully updated.",
+      });
+
+      editForm.reset();
+      setIsEditOpen(false);
+      setIsDetailsOpen(false);
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error Updating Patient",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleScheduleAppointment = (patient: PatientWithCounts) => {
+    // Navigate to schedule page with patient data
+    navigate("/schedule", { state: { patient } });
+  };
+
+  const handleDeletePatient = async (patient: PatientWithCounts) => {
+    if (!confirm(`Are you sure you want to delete ${patient.full_name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("patients")
+        .delete()
+        .eq("id", patient.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Patient Deleted",
+        description: "The patient has been successfully deleted.",
+      });
+
+      setIsDetailsOpen(false);
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error Deleting Patient",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -536,16 +638,28 @@ const PatientsPage = () => {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditPatient(patient);
+                            }}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Patient
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleScheduleAppointment(patient);
+                            }}>
                               <Calendar className="h-4 w-4 mr-2" />
                               Schedule Appointment
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">
+                            <DropdownMenuItem 
+                              className="text-red-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeletePatient(patient);
+                              }}
+                            >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete Patient
                             </DropdownMenuItem>
@@ -682,25 +796,186 @@ const PatientsPage = () => {
 
               {/* Quick Actions */}
               <div className="flex flex-wrap gap-2 pt-4 border-t">
-                <Button size="sm" className="flex items-center gap-2">
+                <Button 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                  onClick={() => handleScheduleAppointment(selectedPatient!)}
+                >
                   <Calendar className="h-4 w-4" />
                   Schedule Appointment
                 </Button>
-                <Button size="sm" variant="outline" className="flex items-center gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => navigate("/insurance-eligibility")}
+                >
                   <Shield className="h-4 w-4" />
                   Verify Insurance
                 </Button>
-                <Button size="sm" variant="outline" className="flex items-center gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => navigate("/intake")}
+                >
                   <UserPlus className="h-4 w-4" />
                   Add to Intake
                 </Button>
-                <Button size="sm" variant="outline" className="flex items-center gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => handleEditPatient(selectedPatient!)}
+                >
                   <Edit className="h-4 w-4" />
                   Edit Details
                 </Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Patient Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl">Edit Patient</DialogTitle>
+            <DialogDescription className="text-sm">
+              Update patient information below.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4 sm:space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Basic Information</h3>
+                
+                <FormField
+                  control={editForm.control}
+                  name="full_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Full Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter patient's full name" {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="date_of_birth"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">Date of Birth</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} className="text-sm" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editForm.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">Phone Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="(123) 456-7890" {...field} className="text-sm" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={editForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Email Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="patient@example.com" {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="123 Main St, City, State, Zip" {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              {/* Emergency Contact */}
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-sm font-medium">Emergency Contact</h3>
+                
+                <FormField
+                  control={editForm.control}
+                  name="emergency_contact_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Contact Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency contact name" {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="emergency_contact_phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Contact Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(123) 456-7890" {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditOpen(false)}
+                  disabled={loading}
+                  className="w-full sm:w-auto"
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading} className="w-full sm:w-auto" size="sm">
+                  {loading ? "Updating..." : "Update Patient"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
