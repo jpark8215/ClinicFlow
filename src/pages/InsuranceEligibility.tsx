@@ -89,12 +89,22 @@ const InsuranceEligibilityPage = () => {
   const [selectedEligibility, setSelectedEligibility] = useState<EligibilityWithPatient | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const form = useForm<EligibilityFormData>({
+    resolver: zodResolver(eligibilitySchema),
+    defaultValues: {
+      patientId: "",
+      payerName: "",
+      details: "",
+    },
+  });
+
+  const editForm = useForm<EligibilityFormData>({
     resolver: zodResolver(eligibilitySchema),
     defaultValues: {
       patientId: "",
@@ -300,6 +310,49 @@ const InsuranceEligibilityPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onEditSubmit = async (data: EligibilityFormData) => {
+    if (!selectedEligibility) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("insurance_eligibility")
+        .update({
+          payer_name: data.payerName,
+          details: data.details || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", selectedEligibility.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Details Updated",
+        description: "The eligibility verification has been updated.",
+      });
+
+      editForm.reset();
+      setIsEditOpen(false);
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error Updating Details",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditDetails = (record: EligibilityWithPatient) => {
+    setSelectedEligibility(record);
+    editForm.setValue("patientId", record.patient_id);
+    editForm.setValue("payerName", record.payer_name);
+    editForm.setValue("details", record.details || "");
+    setIsEditOpen(true);
   };
 
   if (error) {
@@ -655,7 +708,10 @@ const InsuranceEligibilityPage = () => {
                           Mark Ineligible
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditDetails(record);
+                        }}>
                           <Edit className="h-4 w-4 mr-2" />
                           Edit Details
                         </DropdownMenuItem>
@@ -672,6 +728,116 @@ const InsuranceEligibilityPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Eligibility Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl">Edit Eligibility Details</DialogTitle>
+            <DialogDescription className="text-sm">
+              Update the eligibility verification information.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4 sm:space-y-6">
+              <FormField
+                control={editForm.control}
+                name="patientId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Patient *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled>
+                      <FormControl>
+                        <SelectTrigger className="text-sm">
+                          <SelectValue placeholder="Select a patient" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {patients?.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id}>
+                            <div className="flex flex-col">
+                              <span className="text-sm">{patient.full_name}</span>
+                              {patient.phone && (
+                                <span className="text-xs text-muted-foreground">
+                                  {patient.phone}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="payerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Insurance Payer *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="text-sm">
+                          <SelectValue placeholder="Select payer" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Blue Cross Blue Shield">Blue Cross Blue Shield</SelectItem>
+                        <SelectItem value="Aetna">Aetna</SelectItem>
+                        <SelectItem value="United Healthcare">United Healthcare</SelectItem>
+                        <SelectItem value="Cigna">Cigna</SelectItem>
+                        <SelectItem value="Medicare">Medicare</SelectItem>
+                        <SelectItem value="Medicaid">Medicaid</SelectItem>
+                        <SelectItem value="Humana">Humana</SelectItem>
+                        <SelectItem value="Kaiser Permanente">Kaiser Permanente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="details"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Additional Details</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Add any specific coverage details or notes..."
+                        className="resize-none text-sm"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditOpen(false)}
+                  disabled={loading}
+                  className="w-full sm:w-auto"
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading} className="w-full sm:w-auto" size="sm">
+                  {loading ? "Updating..." : "Update Details"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {/* Eligibility Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
@@ -778,7 +944,12 @@ const InsuranceEligibilityPage = () => {
                   <XCircle className="h-4 w-4 mr-2" />
                   Mark Ineligible
                 </Button>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full sm:w-auto"
+                  onClick={() => handleEditDetails(selectedEligibility)}
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Details
                 </Button>
