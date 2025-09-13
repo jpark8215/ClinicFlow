@@ -982,4 +982,5 @@ const PatientsPage = () => {
   );
 };
 
+
 export default PatientsPage;
