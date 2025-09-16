@@ -76,7 +76,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   format, 
   addDays, 
@@ -99,7 +99,7 @@ import {
   endOfMonth,
   eachWeekOfInterval,
 } from "date-fns";
-// import AddAppointmentDialog from "@/components/appointments/AddAppointmentDialog";
+import AddAppointmentDialog from "@/components/appointments/AddAppointmentDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type AppointmentWithDetails = Tables<"appointments"> & {
@@ -143,8 +143,12 @@ const SmartSchedulePage = () => {
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date()));
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Get preselected patient from navigation state
+  const preselectedPatient = location.state?.patient || null;
 
   // Fetch appointments for the current view period
   const { data: appointments, isLoading, error, refetch } = useQuery<AppointmentWithDetails[]>({
@@ -422,7 +426,10 @@ const SmartSchedulePage = () => {
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          {/* <AddAppointmentDialog onSuccess={() => refetch()} /> */}
+          <AddAppointmentDialog 
+            onSuccess={() => refetch()} 
+            preselectedPatient={preselectedPatient}
+          />
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <Download className="h-4 w-4" />
             Export
@@ -751,7 +758,20 @@ const SmartSchedulePage = () => {
                     <div className="text-center py-3 sm:py-4">
                       <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 mx-auto text-green-600 mb-2" />
                       <p className="text-xs sm:text-sm text-green-700 font-medium">Available Slot</p>
-                      <p className="text-xs text-green-600 mt-1">Click to book</p>
+                      <AddAppointmentDialog
+                        onSuccess={() => refetch()}
+                        preselectedPatient={preselectedPatient}
+                        trigger={
+                          <Button 
+                            size="sm" 
+                            className="mt-2 w-full text-xs h-7"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Book Now
+                          </Button>
+                        }
+                      />
                     </div>
                   )}
                 </CardContent>
@@ -1092,6 +1112,19 @@ const SmartSchedulePage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Floating Action Button for Mobile */}
+      <div className="fixed bottom-6 right-6 sm:hidden">
+        <AddAppointmentDialog 
+          onSuccess={() => refetch()} 
+          preselectedPatient={preselectedPatient}
+          trigger={
+            <Button size="lg" className="rounded-full h-14 w-14 shadow-lg">
+              <Plus className="h-6 w-6" />
+            </Button>
+          }
+        />
+      </div>
     </div>
   );
 };
