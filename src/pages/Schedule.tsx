@@ -417,11 +417,10 @@ const SmartSchedulePage = () => {
           </Button>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-              <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               Smart Scheduling
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
-              AI-powered appointment management and optimization
+              Appointment management and optimization
             </p>
           </div>
         </div>
@@ -1113,6 +1112,7 @@ const SmartSchedulePage = () => {
               </div>
             </div>
           )}
+
         </DialogContent>
       </Dialog>
 
