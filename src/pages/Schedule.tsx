@@ -511,7 +511,7 @@ const SmartSchedulePage = () => {
         {/* Calendar View */}
         <TabsContent value="calendar" className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <Select value={calendarView} onValueChange={(value) => setCalendarView(value as any)}>
                 <SelectTrigger className="w-[120px]">
                   <SelectValue />
@@ -530,7 +530,7 @@ const SmartSchedulePage = () => {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-lg font-semibold min-w-[200px] text-center">
+                <h2 className="text-sm sm:text-lg font-semibold min-w-0 text-center truncate sm:min-w-[200px]">
                   {calendarView === "week" 
                     ? `${format(startOfWeek(currentWeekStart), "MMM d")} - ${format(endOfWeek(currentWeekStart), "MMM d, yyyy")}`
                     : format(currentMonth, "MMMM yyyy")
@@ -553,12 +553,13 @@ const SmartSchedulePage = () => {
                   setCurrentWeekStart(startOfWeek(today));
                   setCurrentMonth(today);
                 }}
+                className="hidden sm:flex"
               >
                 Today
               </Button>
             </div>
 
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
                 <span>Available</span>
@@ -575,13 +576,13 @@ const SmartSchedulePage = () => {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-7 gap-4">
-              {[...Array(7)].map((_, i) => (
-                <Skeleton key={i} className="h-32" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
+              {[...Array(calendarView === "week" ? 7 : 35)].map((_, i) => (
+                <Skeleton key={i} className="h-32 sm:h-40" />
               ))}
             </div>
           ) : (
-            <div className={`grid gap-4 ${calendarView === "week" ? "grid-cols-1 sm:grid-cols-7" : "grid-cols-1 sm:grid-cols-7"}`}>
+            <div className={`grid gap-3 sm:gap-4 ${calendarView === "week" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7"}`}>
               {calendarDays.map((day, index) => (
                 <Card
                   key={day.date.toISOString()}
@@ -590,10 +591,10 @@ const SmartSchedulePage = () => {
                   } ${!day.isCurrentMonth ? "opacity-50" : ""}`}
                   onClick={() => setSelectedDate(day.date)}
                 >
-                  <CardHeader className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-xs sm:text-sm truncate">
+                  <CardHeader className="p-2 sm:p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm sm:text-base truncate">
                           {format(day.date, calendarView === "week" ? "EEE" : "d")}
                         </h3>
                         {calendarView === "week" && (
@@ -607,7 +608,7 @@ const SmartSchedulePage = () => {
                           </p>
                         )}
                       </div>
-                      <div className="flex flex-col items-end gap-1 min-w-0">
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <Badge 
                           className={`text-xs ${getUtilizationColor(day.utilizationRate)} px-1 py-0.5`}
                           variant="outline"
@@ -624,29 +625,31 @@ const SmartSchedulePage = () => {
                   </CardHeader>
                   <CardContent className="p-2 sm:p-3 pt-0">
                     <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-1 sm:gap-2 text-xs">
-                        <div>
-                          <span className="text-muted-foreground text-xs">Total:</span>
-                          <span className="ml-1 font-medium text-xs">{day.totalAppointments}</span>
+                      <div className="grid grid-cols-2 gap-1 text-xs">
+                        <div className="min-w-0">
+                          <span className="text-muted-foreground">Total:</span>
+                          <span className="ml-1 font-medium">{day.totalAppointments}</span>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground text-xs">Avail:</span>
-                          <span className="ml-1 font-medium text-green-600 text-xs">{day.availableSlots}</span>
+                        <div className="min-w-0">
+                          <span className="text-muted-foreground">Avail:</span>
+                          <span className="ml-1 font-medium text-green-600">{day.availableSlots}</span>
                         </div>
                       </div>
                       
-                      {day.appointments.slice(0, 3).map((appointment, idx) => (
-                        <div key={appointment.id} className="flex items-center gap-1 text-xs min-w-0">
-                          <div className="w-2 h-2 rounded-full bg-primary"></div>
-                          <span className="truncate text-xs">
-                            {format(parseISO(appointment.appointment_time), "HH:mm")} - {appointment.patients?.full_name}
-                          </span>
-                        </div>
-                      ))}
+                      <div className="space-y-1">
+                        {day.appointments.slice(0, calendarView === "week" ? 4 : 2).map((appointment, idx) => (
+                          <div key={appointment.id} className="flex items-center gap-1 text-xs min-w-0">
+                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0"></div>
+                            <span className="truncate flex-1">
+                              {format(parseISO(appointment.appointment_time), "HH:mm")} - {appointment.patients?.full_name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                       
-                      {day.appointments.length > 3 && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          +{day.appointments.length - 3} more
+                      {day.appointments.length > (calendarView === "week" ? 4 : 2) && (
+                        <p className="text-xs text-muted-foreground text-center">
+                          +{day.appointments.length - (calendarView === "week" ? 4 : 2)} more
                         </p>
                       )}
                     </div>
