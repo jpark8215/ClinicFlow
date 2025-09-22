@@ -55,12 +55,16 @@ type AppointmentFormData = z.infer<typeof appointmentSchema>;
 interface AddAppointmentDialogProps {
   onSuccess?: () => void;
   preselectedPatient?: Tables<"patients"> | null;
+  preselectedDate?: Date;
+  preselectedTime?: string;
   trigger?: React.ReactNode;
 }
 
 export default function AddAppointmentDialog({ 
   onSuccess, 
   preselectedPatient, 
+  preselectedDate,
+  preselectedTime,
   trigger 
 }: AddAppointmentDialogProps) {
   const [open, setOpen] = useState(false);
@@ -72,8 +76,8 @@ export default function AddAppointmentDialog({
     defaultValues: {
       patient_id: preselectedPatient?.id || "",
       provider_id: "",
-      appointment_date: new Date(),
-      appointment_time: "",
+      appointment_date: preselectedDate || new Date(),
+      appointment_time: preselectedTime || "",
       duration_minutes: "30",
       appointment_type: "consultation",
       notes: "",

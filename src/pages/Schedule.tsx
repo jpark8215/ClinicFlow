@@ -763,6 +763,8 @@ const SmartSchedulePage = () => {
                       <AddAppointmentDialog
                         onSuccess={() => refetch()}
                         preselectedPatient={preselectedPatient}
+                        preselectedDate={selectedDate}
+                        preselectedTime={slot.time}
                         trigger={
                           <Button 
                             size="sm" 
