@@ -1,4 +1,4 @@
-# ClinicFlow - AI-Powered Clinical Operations Platform
+# ClinicFlow - Clinical Operations Platform
 
 Welcome to ClinicFlow, a comprehensive web application designed to streamline clinical operations using AI and automation. This project was bootstrapped with Lovable and powered by Supabase.
 
@@ -683,6 +683,7 @@ For database-related issues or technical support:
 2. **Performance Problems**: Check query logs and index utilization
 3. **Security Concerns**: Review audit logs and access patterns
 4. **Data Recovery**: Contact Supabase support with project details
+
 
 
 
